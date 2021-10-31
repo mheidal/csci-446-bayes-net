@@ -1,9 +1,89 @@
+import inspect
+from copy import deepcopy
+from typing import List
+
+import numpy as numpy
+from node import Node
+
+
 class BayesianNetwork:
 
-    def __init__(self, bif_file: str) -> None:
-        self.bif_file: str = bif_file
-        pass
+    def __init__(self, bif_file_name: str) -> None:
+        self.bif_file_name: str = bif_file_name
+        self.name = ""
+        self.__generate_network_from_bif()
 
-    def generate_network_from_bif(self) -> None:
-        pass
+    def __generate_network_from_bif(self) -> None:
+        stack = inspect.stack()[1]
+        caller_name: str = stack[3]
+        if caller_name != "__init__":
+            raise OSError("BayesianNetwork.__generate_network_from_bif() can only be called from constructor")
+        with open(f"networks\\{self.bif_file_name}", 'r') as network_file:
+            str_nodes = []  # str node format: [name, type, number_of_states, state names..., ]
+            nodes: List[Node] = []
+            iterable_network_file = iter(network_file)
+            iteration: int = -1
+            for line in iterable_network_file:
+                iteration += 1
+                if line.startswith("network"):  # start of a network file
+                    if iteration != 0:
+                        raise IOError("File does not start with a network declaration")
+                    else:
+                        name: str = deepcopy(line)
+                        name = name.replace("network ", "")
+                        bracket_index: int = name.index('{')
+                        self.name = name[:bracket_index - 1]
+                elif line.startswith("variable"):  # node
+                    node: List[str] = []
+                    node_name: str = deepcopy(line)
+                    node_name = node_name.replace("variable ", "")
+                    node_name = node_name.replace(" {", "")
+                    node_name = node_name.replace("\n", "")
+                    node.append(node_name)
+                    line = next(iterable_network_file)
+                    iteration += 1
+                    while not line.startswith('}'):
+                        if line.startswith('  type'):
+                            node_type: str = deepcopy(line)
+                            node_type = node_type.replace("type ", "")
+                            node_type = node_type[:node_type.index("[") - 1]
+                            node.append(node_type.replace(" ", ""))
+                            this_line: str = deepcopy(line)
+                            domain: List[str] = this_line.split("{")
+                            domain[1] = domain[1].replace(" };\n", "")
+                            domain = domain[1].split(", ")
+                            for state in domain:
+                                node.append(state)
+                        line = next(iterable_network_file)
+                        iteration += 1
+                    str_nodes.append(node)
+                    continue
+                elif line.startswith("probability"):  # probability table for a node
+                    if "|" in line:
 
+                    else:
+                        nodes.append(Node())
+                    while not line.startswith('}'):
+                        if line.startswith("  table"):
+                            pass
+                        if line.startswith("  ("):
+                            node_type: str = deepcopy(line)
+                            node_type = node_type.replace("type ", "")
+                            node_type = node_type[:node_type.index("[") - 1]
+                            node.append(node_type.replace(" ", ""))
+                            this_line: str = deepcopy(line)
+                            domain: List[str] = this_line.split("{")
+                            domain[1] = domain[1].replace(" };\n", "")
+                            domain = domain[1].split(", ")
+                            for state in domain:
+                                node.append(state)
+                        line = next(iterable_network_file)
+                        iteration += 1
+                    continue
+                elif line.startswith("}"):  # end of a variable, network or probability
+                    pass
+                elif False:
+                    pass
+                else:
+                    raise IOError(f"Non standard file format found at line {iteration}: {line}")
+                continue
