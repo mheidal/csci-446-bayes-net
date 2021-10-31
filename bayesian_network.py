@@ -7,3 +7,11 @@ class BayesianNetwork:
     def generate_network_from_bif(self) -> None:
         pass
 
+    def get_node(self) -> node:
+        pass
+
+    def print_network(self) -> str:
+        pass
+
+
+
