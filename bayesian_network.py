@@ -49,6 +49,8 @@ class BayesianNetwork:
                             node_type = node_type[:node_type.index("[") - 1]
                             node.append(node_type.replace(" ", ""))
                             this_line: str = deepcopy(line)
+                            domain_length: str = this_line[this_line.index("[")+1:this_line.index("]")].replace(" ", "")
+                            node.append(domain_length)
                             domain: List[str] = this_line.split("{")
                             domain[1] = domain[1].replace(" };\n", "")
                             domain = domain[1].split(", ")
@@ -59,10 +61,23 @@ class BayesianNetwork:
                     str_nodes.append(node)
                     continue
                 elif line.startswith("probability"):  # probability table for a node
-                    if "|" in line:
-
+                    probability_line: str = deepcopy(line)
+                    parents: List[str] = []
+                    this_node: List[str] = []
+                    domain: List[str] = []
+                    node_name: str = ""
+                    if "|" in probability_line:
+                        node_name = probability_line[probability_line.index('('):probability_line.index('|')].replace(" ", "")
+                        parents = probability_line[probability_line.index('|'):probability_line.index(')')].replace(" ", "").split(",")
                     else:
-                        nodes.append(Node())
+                        node_name = probability_line[probability_line.index('(')+1:probability_line.index(')')].replace(" ", "")
+                    for node_ in str_nodes:
+                        if node_[0] == node_name:
+                            this_node = node_
+                            break
+                    for state in range(0, int(this_node[2])-1):
+                        domain.append(this_node[state+int(this_node[2])])
+                    nodes.append(Node(name=this_node[0], domain=domain, parents=parents))
                     while not line.startswith('}'):
                         if line.startswith("  table"):
                             pass
