@@ -1,0 +1,2 @@
+class ApproximateInferenceEngine:
+    pass
