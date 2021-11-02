@@ -1,6 +1,6 @@
 import inspect
 from copy import deepcopy
-from typing import List
+from typing import List, Tuple
 
 import numpy as numpy
 from node import Node
@@ -49,7 +49,8 @@ class BayesianNetwork:
                             node_type = node_type[:node_type.index("[") - 1]
                             node.append(node_type.replace(" ", ""))
                             this_line: str = deepcopy(line)
-                            domain_length: str = this_line[this_line.index("[")+1:this_line.index("]")].replace(" ", "")
+                            domain_length: str = this_line[this_line.index("[") + 1:this_line.index("]")].replace(" ",
+                                                                                                                  "")
                             node.append(domain_length)
                             domain: List[str] = this_line.split("{")
                             domain[1] = domain[1].replace(" };\n", "")
@@ -60,36 +61,72 @@ class BayesianNetwork:
                         iteration += 1
                     str_nodes.append(node)
                     continue
-                elif line.startswith("probability"):  # probability table for a node
+
+                elif line.startswith("probability"):  # probability table for a node and generate Node
                     probability_line: str = deepcopy(line)
-                    parents: List[str] = []
                     this_node: List[str] = []
                     domain: List[str] = []
-                    node_name: str = ""
-                    if "|" in probability_line:
-                        node_name = probability_line[probability_line.index('(')+1:probability_line.index('|')].replace(" ", "")
-                        parents = probability_line[probability_line.index('|')+1:probability_line.index(')')].replace(" ", "").split(",")
+
+                    if "|" in probability_line:     # get node's parents if not root (root node does not have a '|')
+                        node_name = probability_line[
+                                    probability_line.index('(') + 1:probability_line.index('|')].replace(" ", "")
+                        parents = probability_line[probability_line.index('|') + 1:probability_line.index(')')].replace(
+                            " ", "").split(",")
                     else:
-                        node_name = probability_line[probability_line.index('(')+1:probability_line.index(')')].replace(" ", "")
+                        node_name = probability_line[
+                                    probability_line.index('(') + 1:probability_line.index(')')].replace(" ", "")
+                        parents = []
+
                     for str_node in str_nodes:
                         if str_node[0] == node_name:
                             this_node = str_node
                             break
-                    for state in range(0, int(this_node[2])-1):
-                        domain.append(this_node[state+int(this_node[2])])
-                    nodes.append(Node(name=this_node[0], domain=domain, parents=parents))
-                    while not line.startswith('}'):
-                        if line.startswith("  table"):
-                            pass
-                        if line.startswith("  ("):
-                            pass
-                        line = next(iterable_network_file)
-                        iteration += 1
+
+                    for state in range(0, int(this_node[2])):
+                        domain.append(this_node[state + 3])
+
+                    nodes.append(Node(name=this_node[0], domain=domain, parents=parents))   # create node now that parents are known
+                    node_index: int = len(nodes) - 1
+
+                    line = next(iterable_network_file)
+                    iteration += 1
+
+                    if line.startswith("  table"):  # root node probability table
+                        probability_line_list: List[str] = deepcopy(line).replace(" ", "").replace(";", "").replace(
+                            "table", "").replace("\n", "").split(",")
+                        state_prob_list: List[Tuple[str, float]] = []
+                        for probability, domain_item in zip(probability_line_list, domain):
+                            state_prob: Tuple[str, float] = (domain_item, float(probability))
+                            state_prob_list.append(state_prob)
+                        relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = [([], state_prob_list)]
+                        nodes[node_index].create_probability_table(relation)
+                        continue
+
+                    elif line.startswith("  ("):    # non-root node probability table
+
+                        relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]
+
+                        while not line.startswith('}'):
+                            parent_states: List[str] = deepcopy(line)[line.index("(")+1:line.index(")")].replace(" ", "").split(",")
+                            probability_of_node_states_for_parents: List[str] = deepcopy(line)[line.index(")")+1:len(line) - 2].replace(" ", "").split(",")
+
+                            parents_and_state: List[Tuple[str, str]] = []
+                            for parent, state in zip(parents, parent_states):
+                                parents_and_state.append((parent, state))
+
+                            node_state_and_probability: List[Tuple[str, float]] = []
+                            for domain_item, probability in zip(domain, probability_of_node_states_for_parents):
+                                node_state_and_probability.append((domain_item, float(probability)))
+
+                            relation.append((parents_and_state, node_state_and_probability))
+                            line = next(iterable_network_file)
+                            iteration += 1
+                        relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = [([], [])]
+                        nodes[node_index].create_probability_table(relation)
                     continue
                 elif line.startswith("}"):  # end of a variable, network or probability
-                    pass
-                elif False:
                     pass
                 else:
                     raise IOError(f"Non standard file format found at line {iteration}: {line}")
                 continue
+            self.nodes = deepcopy(nodes)
