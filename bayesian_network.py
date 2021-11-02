@@ -2,7 +2,6 @@ import inspect
 from copy import deepcopy
 from typing import List, Tuple
 
-import numpy as numpy
 from node import Node
 
 
@@ -133,7 +132,7 @@ class BayesianNetwork:
                             relation.append((parents_and_state, node_state_and_probability))
                             line = next(iterable_network_file)
                             iteration += 1
-                        #relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = [([], [])]
+
                         nodes[node_index].create_probability_table(relation)
                         continue
                 elif line.startswith("}"):  # end of a variable, network or probability
