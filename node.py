@@ -72,7 +72,6 @@ class Node:
             string += str(row) + "\n"
         return string
 
-
 def main():
     print("Node test")
     domain: List[str] = ["T", "F"]

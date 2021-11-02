@@ -2,9 +2,11 @@ import inspect
 from copy import deepcopy
 from typing import List
 from typing import Tuple
+from typing import Dict
 
 import numpy as numpy
 from node import Node
+from factor import Factor
 
 
 class BayesianNetwork:
@@ -12,6 +14,7 @@ class BayesianNetwork:
     def __init__(self, bif_file_name: str) -> None:
         self.bif_file_name: str = bif_file_name
         self.name = ""
+        self.nodes = []
         self.__generate_network_from_bif()
 
     def __generate_network_from_bif(self) -> None:
@@ -98,5 +101,26 @@ class BayesianNetwork:
     # arguments:
     # queries: a list of strings corresponding to the names of query variables
     # evidence: a list of tuples corresponding to names and states of evidence variables
-    def query(self, queries: List[str], evidence: List[Tuple[str]]):
+    def elim_ask(self, queries: List[Node], evidence: List[Tuple[Node, str]]):
+        factors: List[Dict] = []
+        for node in self.nodes:
+            factors.append(self.make_factors(node, evidence))
+            if not (node in queries or node in evidence):
+
+
+    def make_factors(self, node: Node, evidence: List[Tuple[Node, str]]) -> Dict:
+        indices = []
+        indices.append(node.name)
+        for parent in node.parents:
+            indices.append(parent.name)
+        table = []
+        
+
+
+    def pointwise_product(self, f1, f2):
         pass
+
+    def get_node_order(self) -> List[Node]:
+        return self.nodes
+
+    def sum_out(self, node: Node, factors: List[Factor]):
