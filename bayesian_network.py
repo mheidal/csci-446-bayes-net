@@ -11,7 +11,19 @@ class BayesianNetwork:
     def __init__(self, bif_file_name: str) -> None:
         self.bif_file_name: str = bif_file_name
         self.name = ""
-        self.__generate_network_from_bif()
+        self.str = ""
+        self.nodes: dict[str, Node] = {}
+        self.__generate_network_from_bif()          # this must be last in this method
+
+    def __str__(self) -> str:
+        if self.str == "":
+            string: str = ""
+            for key in self.nodes:
+                string += f"{key}:\n{self.nodes.get(key)}\n"
+            self.str = string
+            return string
+        else:
+            return self.str
 
     def __generate_network_from_bif(self) -> None:
         stack = inspect.stack()[1]
@@ -104,7 +116,7 @@ class BayesianNetwork:
 
                     elif line.startswith("  ("):    # non-root node probability table
 
-                        relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]
+                        relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = []
 
                         while not line.startswith('}'):
                             parent_states: List[str] = deepcopy(line)[line.index("(")+1:line.index(")")].replace(" ", "").split(",")
@@ -121,12 +133,14 @@ class BayesianNetwork:
                             relation.append((parents_and_state, node_state_and_probability))
                             line = next(iterable_network_file)
                             iteration += 1
-                        relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = [([], [])]
+                        #relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = [([], [])]
                         nodes[node_index].create_probability_table(relation)
-                    continue
+                        continue
                 elif line.startswith("}"):  # end of a variable, network or probability
                     pass
                 else:
                     raise IOError(f"Non standard file format found at line {iteration}: {line}")
                 continue
-            self.nodes = deepcopy(nodes)
+            self.nodes = {}
+            for node_obj in nodes:
+                self.nodes[node_obj.name] = node_obj
