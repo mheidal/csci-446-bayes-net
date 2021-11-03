@@ -150,10 +150,13 @@ class BayesianNetwork:
     # arguments:
     # queries: a list of strings corresponding to the names of query variables
     # evidence: a list of tuples corresponding to names and states of evidence variables
-    def elim_ask(self, queries: List[str], evidence: List[Tuple[Node, str]]):
+    def elim_ask(self, queries: List[str], evidence: List[Tuple[str, str]]):
         factors: List[Dict] = []
         for node in self.nodes.keys():
             factors.append(self.make_factors(node, evidence))
+            if node not in queries and node not in evidence[:][0]:
+                self.sum_out(node, factors)
+        return (self.normalize(self.pointwise_product(factors)))
 
     # Arguments: A node name, a list of evidence nodes and their values.
     # Returns: A truth table of the node and its parents, with values restricted by evidence. For example, if the node
@@ -168,16 +171,21 @@ class BayesianNetwork:
     #      - The probability of the child node having the value held in the key given that the parents have the values
     #        given in the key.
     def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Dict[Tuple[Tuple[str, str]], float]:
+        # identification of what variables are included
         indices = []
         indices.append(node)
         for parent in self.nodes[node].parents:
             indices.append(parent)
+        # not really necessary, but describes what the factor includes
         factor_name = "phi("
         for i in range(len(indices)):
             factor_name += indices[i]
             if i < len(indices) - 1:
                 factor_name += ","
         factor_name += ")"
+
+        # creation of tables
+        # identification of what values to use in each column
         table = {}
         value_lists = []
         for index in indices:
@@ -205,18 +213,77 @@ class BayesianNetwork:
 
         return table
 
-
+    # TODO
     def pointwise_product(self, f1, f2):
+        f1_exclusive_variables = []
+        f2_exclusive_variables = []
+        shared_variables = []
+        for key in f1.keys():
+            print(key)
+            for tup in key:
+                print(tup)
+                print(tup[0])
+        for variable_state_assignments in f1.keys():
+            for variable_state_assignment in variable_state_assignments:
+                f1_exclusive_variables.append(variable_state_assignment[0])
+            break
+
+        for variable_state_assignments in f2.keys():
+            for variable_state_assignment in variable_state_assignments:
+                if variable_state_assignment[0] not in f1_exclusive_variables:
+                    f2_exclusive_variables.append(variable_state_assignment[0])
+                else:
+                    shared_variables.append(variable_state_assignment[0])
+                    f1_exclusive_variables.remove(variable_state_assignment[0])
+            break
+
+        # print("Variables exclusive to f1:")
+        # print(f1_exclusive_variables)
+        #
+        # print("Variables exclusive to f2:")
+        # print(f2_exclusive_variables)
+        # print("shared variables:")
+        # print(shared_variables)
+
+        
+
+    pass
+
+    # TODO
+    def sum_out(self, node: str, factors: List[Dict]):
         pass
 
-    def get_node_order(self) -> List[Node]:
+    #TODO
+    def normalize(self, arg):
+        pass
+
+    def get_node_order(self) -> Dict[str, Node]:
         return self.nodes
 
-    def sum_out(self, node: str, factors: Dict):
-        pass
+
 
 def main():
-    print("Node test")
+
+
+
+    # B_relations = [([], [("T", 0.5), ("F", 0.5)])]
+    # C_relations = [([], [("T", 0.45), ("F", 0.55)])]
+    # A_relations = [([("B", "F"), ("C", "F")], [("T", 0.2), ("F", 0.8)]),
+    #                ([("B", "F"), ("C", "T")], [("T", 0.7), ("F", 0.3)]),
+    #                ([("B", "T"), ("C", "F")], [("T", 0.6), ("F", 0.4)]),
+    #                ([("B", "T"), ("C", "T")], [("T", 0.9), ("F", 0.1)]),
+    #                ]
+    # A.create_probability_table(A_relations)
+    # B.create_probability_table(B_relations)
+    # C.create_probability_table(C_relations)
+    # print("A")
+    # print(A)
+    # print("B")
+    # print(B)
+    # print("C")
+    # print(C)
+    # nodes = [A, B, C]
+    print("Factor test")
     domain: List[str] = ["T", "F"]
     B: Node = Node("B", domain, [])
     E: Node = Node("E", domain, [])
@@ -236,24 +303,6 @@ def main():
     M.create_probability_table([([("A", "F")], [("T", 0.01), ("F", 0.99)]),
                                 ([("A", "T")], [("T", 0.7), ("F", 0.3)])
                                 ])
-
-    # B_relations = [([], [("T", 0.5), ("F", 0.5)])]
-    # C_relations = [([], [("T", 0.45), ("F", 0.55)])]
-    # A_relations = [([("B", "F"), ("C", "F")], [("T", 0.2), ("F", 0.8)]),
-    #                ([("B", "F"), ("C", "T")], [("T", 0.7), ("F", 0.3)]),
-    #                ([("B", "T"), ("C", "F")], [("T", 0.6), ("F", 0.4)]),
-    #                ([("B", "T"), ("C", "T")], [("T", 0.9), ("F", 0.1)]),
-    #                ]
-    # A.create_probability_table(A_relations)
-    # B.create_probability_table(B_relations)
-    # C.create_probability_table(C_relations)
-    # print("A")
-    # print(A)
-    # print("B")
-    # print(B)
-    # print("C")
-    # print(C)
-    # nodes = [A, B, C]
     nodes = [B, E, A, J, M]
     bn = BayesianNetwork("")
     for node in nodes:
@@ -262,8 +311,11 @@ def main():
     print('made bn')
     print(bn)
     print("Factors:")
-    bn.make_factors("B", [("B", "T")])
-
+    factors = []
+    for i in ["B","E","A","J","M",]:
+        factors.append(bn.make_factors(i, []))
+        print()
+    bn.pointwise_product(factors[3], factors[4])
 
 
 if __name__ == "__main__":
