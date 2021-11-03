@@ -102,7 +102,7 @@ def main():
     print("C")
     print(C)
 
-    print(A.probability_distribution_given_evidence([("C", "F"), ("B", "T")]))
+    print(A.probability_distribution_given_evidence([("B", "T")]))
 
 if __name__ == "__main__":
     main()

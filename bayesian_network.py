@@ -1,11 +1,14 @@
 import inspect
+import itertools
 from copy import deepcopy
 from typing import List
 from typing import Tuple
 from typing import Dict
 from itertools import product
+from factor import Factor
 
 from node import Node
+
 
 
 class BayesianNetwork:
@@ -158,19 +161,25 @@ class BayesianNetwork:
                 self.sum_out(node, factors)
         return (self.normalize(self.pointwise_product(factors)))
 
+    def product_dict(self, d: Dict):
+        keys = d.keys()
+        values = d.values()
+        for instance in product(*values):
+            yield(dict(zip(keys, instance)))
+
     # Arguments: A node name, a list of evidence nodes and their values.
     # Returns: A truth table of the node and its parents, with values restricted by evidence. For example, if the node
     # has two parents and all three are booleans, then the resulting truth table will have 2x2x2=8 rows. If one of those
     # nodes is listed as evidence, it will be treated as a node with a domain of length 1, and the resulting truth
     # table will have 2x2x1 rows.
-    # Format of output: Dictionary.
+    # Format of output: Factor.
     #   - Keys: Tuple.
     #       - Contents: Tuples.
     #           - Contents: String corresponding to node name, string corresponding to node value.
     #   - Value: A float.
     #      - The probability of the child node having the value held in the key given that the parents have the values
     #        given in the key.
-    def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Dict[Tuple[Tuple[str, str]], float]:
+    def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Factor:
         # identification of what variables are included
         indices = []
         indices.append(node)
@@ -184,51 +193,57 @@ class BayesianNetwork:
                 factor_name += ","
         factor_name += ")"
 
+
+
         # creation of tables
         # identification of what values to use in each column
         table = {}
-        value_lists = []
+        domains = {}
         for index in indices:
             index_is_not_evidence: bool = True
-            col_values = []
+            domain = []
             for event in evidence:
                 if event[0] == index:
                     index_is_not_evidence = False
-                    col_values.append(event[1])
+                    domain = [event[1]]
             if index_is_not_evidence:
                 for state in self.nodes[index].domain:
-                    col_values.append(state)
-            value_lists.append(col_values)
+                    domain.append(state)
+            domains[index] = domain
 
-        row_key_state_assignments: List[Tuple] = list(product(*value_lists))
-        row_keys: List[Tuple[Tuple]] = [None] * len(row_key_state_assignments)
-        for i in range(len(row_key_state_assignments)):
-            row_keys[i] = tuple(zip(indices, row_key_state_assignments[i]))
+        row_keys = list(self.product_dict(domains))
+        #
+        # row_keys: List[Tuple[Tuple]] = [None] * len(row_key_state_assignments)
+        # for i in range(len(row_key_state_assignments)):
+        #
+        #     row_keys[i] = tuple(zip(indices, row_key_state_assignments[i]))
+
+        for i in range(len(row_keys)):
+            row_key_assignments = []
+            for key in row_keys[i].keys():
+                for value in row_keys[i][key]:
+                    row_key_assignments.append((key, value))
+            row_keys[i] = row_key_assignments
 
         for key in row_keys:
-            table[key] = self.nodes[node].probability_distribution_given_evidence(list(key))
-        print(factor_name)
-        for key in table.keys():
-            print(key, ":", table[key])
+            table[tuple(key)] = self.nodes[node].probability_distribution_given_evidence([key])
 
-        return table
+
+        factor: Factor = Factor(table, indices, factor_name)
+
+        return factor
 
     # TODO
-    def pointwise_product(self, f1, f2):
+    def pointwise_product(self, f1: Factor, f2: Factor):
         f1_exclusive_variables = []
         f2_exclusive_variables = []
         shared_variables = []
-        for key in f1.keys():
-            print(key)
-            for tup in key:
-                print(tup)
-                print(tup[0])
-        for variable_state_assignments in f1.keys():
+        for variable_state_assignments in f1.table.keys():
             for variable_state_assignment in variable_state_assignments:
                 f1_exclusive_variables.append(variable_state_assignment[0])
             break
 
-        for variable_state_assignments in f2.keys():
+        for variable_state_assignments in f2.table.keys():
             for variable_state_assignment in variable_state_assignments:
                 if variable_state_assignment[0] not in f1_exclusive_variables:
                     f2_exclusive_variables.append(variable_state_assignment[0])
@@ -237,15 +252,27 @@ class BayesianNetwork:
                     f1_exclusive_variables.remove(variable_state_assignment[0])
             break
 
-        # print("Variables exclusive to f1:")
-        # print(f1_exclusive_variables)
-        #
-        # print("Variables exclusive to f2:")
-        # print(f2_exclusive_variables)
-        # print("shared variables:")
-        # print(shared_variables)
+        print("Variables exclusive to f1:")
+        print(f1_exclusive_variables)
 
-        
+        print("Variables exclusive to f2:")
+        print(f2_exclusive_variables)
+        print("shared variables:")
+        print(shared_variables)
+
+        indices = []
+        for f1_variable in f1_exclusive_variables:
+            indices.append(f1_variable)
+        for shared_variable in shared_variables:
+            indices.append(shared_variable)
+        for f2_variable in f2_exclusive_variables:
+            indices.append(f2_variable)
+
+        print(indices)
+
+
+
+
 
     pass
 
@@ -308,14 +335,17 @@ def main():
     for node in nodes:
         bn.nodes[node.name] = node
 
-    print('made bn')
     print(bn)
     print("Factors:")
     factors = []
-    for i in ["B","E","A","J","M",]:
-        factors.append(bn.make_factors(i, []))
-        print()
-    bn.pointwise_product(factors[3], factors[4])
+    factor = bn.make_factors("A", [])
+    print(factor)
+    # for i in ["B","E","A","J","M",]:
+    #     factor = bn.make_factors(i, [])
+    #     factors.append(factor)
+    #     print(factor)
+    #     print()
+    # bn.pointwise_product(factors[3], factors[4])
 
 
 if __name__ == "__main__":
