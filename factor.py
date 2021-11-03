@@ -10,5 +10,17 @@ class Factor():
 
     def __str__(self):
         string = ""
-        string += self.name + "\n" + str(self.table)
+        headered = False
+        for key in self.table.keys():
+            if not headered:
+                for pair in key:
+                    string += pair[0]
+                    string += " "
+                string += self.name
+                string += "\n"
+                headered = True
+            for pair in key:
+                string += pair[1] + " "
+            string += str(self.table[key])
+            string += "\n"
         return string

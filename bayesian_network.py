@@ -338,13 +338,13 @@ def main():
     print(bn)
     print("Factors:")
     factors = []
-    factor = bn.make_factors("A", [])
-    print(factor)
-    # for i in ["B","E","A","J","M",]:
-    #     factor = bn.make_factors(i, [])
-    #     factors.append(factor)
-    #     print(factor)
-    #     print()
+    # factor = bn.make_factors("A", [])
+    # print(factor)
+    for i in ["B","E","A","J","M",]:
+        factor = bn.make_factors(i, [])
+        factors.append(factor)
+        print(factor)
+        print()
     # bn.pointwise_product(factors[3], factors[4])
 
 
