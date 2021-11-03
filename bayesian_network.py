@@ -8,10 +8,14 @@ from node import Node
 
 class BayesianNetwork:
 
+
+
     def __init__(self, bif_file_name: str) -> None:
         self.bif_file_name: str = bif_file_name
         self.name = ""
         self.__generate_network_from_bif()
+
+
 
     def __generate_network_from_bif(self) -> None:
         stack = inspect.stack()[1]
