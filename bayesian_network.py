@@ -6,7 +6,6 @@ from typing import Dict
 from itertools import product
 
 from node import Node
-from factor import Factor
 
 
 class BayesianNetwork:
@@ -156,8 +155,19 @@ class BayesianNetwork:
         for node in self.nodes.keys():
             factors.append(self.make_factors(node, evidence))
 
-
-    def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Dict:
+    # Arguments: A node name, a list of evidence nodes and their values.
+    # Returns: A truth table of the node and its parents, with values restricted by evidence. For example, if the node
+    # has two parents and all three are booleans, then the resulting truth table will have 2x2x2=8 rows. If one of those
+    # nodes is listed as evidence, it will be treated as a node with a domain of length 1, and the resulting truth
+    # table will have 2x2x1 rows.
+    # Format of output: Dictionary.
+    #   - Keys: Tuple.
+    #       - Contents: Tuples.
+    #           - Contents: String corresponding to node name, string corresponding to node value.
+    #   - Value: A float.
+    #      - The probability of the child node having the value held in the key given that the parents have the values
+    #        given in the key.
+    def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Dict[Tuple[Tuple[str, str]], float]:
         indices = []
         indices.append(node)
         for parent in self.nodes[node].parents:
@@ -193,6 +203,8 @@ class BayesianNetwork:
         for key in table.keys():
             print(key, ":", table[key])
 
+        return table
+
 
     def pointwise_product(self, f1, f2):
         pass
@@ -200,33 +212,49 @@ class BayesianNetwork:
     def get_node_order(self) -> List[Node]:
         return self.nodes
 
-    def sum_out(self, node: Node, factors: List[Factor]):
+    def sum_out(self, node: str, factors: Dict):
         pass
 
 def main():
     print("Node test")
     domain: List[str] = ["T", "F"]
-    parents: List[str] = ["B", "C"]
     B: Node = Node("B", domain, [])
-    C: Node = Node("C", domain, [])
-    A: Node = Node("A", domain, parents)
-    B_relations = [([], [("T", 0.5), ("F", 0.5)])]
-    C_relations = [([], [("T", 0.45), ("F", 0.55)])]
-    A_relations = [([("B", "F"), ("C", "F")], [("T", 0.2), ("F", 0.8)]),
-                   ([("B", "F"), ("C", "T")], [("T", 0.7), ("F", 0.3)]),
-                   ([("B", "T"), ("C", "F")], [("T", 0.6), ("F", 0.4)]),
-                   ([("B", "T"), ("C", "T")], [("T", 0.9), ("F", 0.1)]),
-                   ]
-    A.create_probability_table(A_relations)
-    B.create_probability_table(B_relations)
-    C.create_probability_table(C_relations)
-    print("A")
-    print(A)
-    print("B")
-    print(B)
-    print("C")
-    print(C)
-    nodes = [A, B, C]
+    E: Node = Node("E", domain, [])
+    A: Node = Node("A", domain, ["B", "E"])
+    J: Node = Node("J", domain, ["A"])
+    M: Node = Node("M", domain, ["A"])
+    B.create_probability_table([([], [("T", 0.001), ("F", 0.999)])])
+    E.create_probability_table([([], [("T", 0.002), ("F", 0.998)])])
+    A.create_probability_table([([("B", "F"), ("E", "F")], [("T", 0.001), ("F", 0.999)]),
+                                ([("B", "F"), ("E", "T")], [("T", 0.29), ("F", 0.71)]),
+                                ([("B", "T"), ("E", "F")], [("T", 0.94), ("F", 0.06)]),
+                                ([("B", "T"), ("E", "T")], [("T", 0.95), ("F", 0.05)]),
+                                ])
+    J.create_probability_table([([("A", "F")], [("T", 0.05), ("F", 0.95)]),
+                                ([("A", "T")], [("T", 0.9), ("F", 0.1)])
+                                ])
+    M.create_probability_table([([("A", "F")], [("T", 0.01), ("F", 0.99)]),
+                                ([("A", "T")], [("T", 0.7), ("F", 0.3)])
+                                ])
+
+    # B_relations = [([], [("T", 0.5), ("F", 0.5)])]
+    # C_relations = [([], [("T", 0.45), ("F", 0.55)])]
+    # A_relations = [([("B", "F"), ("C", "F")], [("T", 0.2), ("F", 0.8)]),
+    #                ([("B", "F"), ("C", "T")], [("T", 0.7), ("F", 0.3)]),
+    #                ([("B", "T"), ("C", "F")], [("T", 0.6), ("F", 0.4)]),
+    #                ([("B", "T"), ("C", "T")], [("T", 0.9), ("F", 0.1)]),
+    #                ]
+    # A.create_probability_table(A_relations)
+    # B.create_probability_table(B_relations)
+    # C.create_probability_table(C_relations)
+    # print("A")
+    # print(A)
+    # print("B")
+    # print(B)
+    # print("C")
+    # print(C)
+    # nodes = [A, B, C]
+    nodes = [B, E, A, J, M]
     bn = BayesianNetwork("")
     for node in nodes:
         bn.nodes[node.name] = node
@@ -234,7 +262,7 @@ def main():
     print('made bn')
     print(bn)
     print("Factors:")
-    bn.make_factors("A", [])
+    bn.make_factors("B", [("B", "T")])
 
 
 
