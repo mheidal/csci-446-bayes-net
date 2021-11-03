@@ -48,13 +48,15 @@ class Node:
 
     # arguments:
     # evidence: a list of tuples of variable names and state assignments to those variables.
-    # TODO: SHOULD THIS ONLY ALLOW EVIDENCE TO INCLUDE PARENTS? LET BAYES NET HANDLE RECURSIVE SHIT?
-    # TODO: SHOULD THIS BE A METHOD OF BAYESIAN_NETWORK?
-    def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]):
+    def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]) -> List[float]:
+        evidence_parents = []
+        for event in evidence:
+            if event[0] in self.parents:
+                evidence_parents.append(event)
         probabilities: List[float] = [0] * len(self.domain)
         for row in self.probability_table:
             row_matches_evidence: bool = True
-            for variable in evidence:
+            for variable in evidence_parents:
                 if row[self.probability_table_indices.index(variable[0])] != variable[1]:
                     row_matches_evidence = False
             if row_matches_evidence:
@@ -63,6 +65,10 @@ class Node:
         total = sum(probabilities)
         for i in range(len(probabilities)):
             probabilities[i] = probabilities[i] / total
+
+        for event in evidence:
+            if event[0] == self.name:
+                return [probabilities[self.probability_table_indices.index(event[1]) - len(self.parents)]]
         return probabilities
 
     def __str__(self) -> str:
