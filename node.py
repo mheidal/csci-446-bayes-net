@@ -142,6 +142,5 @@ def main():
 
     print(A.probability_distribution_given_evidence([("B", "T")]))  # ("C", "F")
 
-
 if __name__ == "__main__":
     main()
