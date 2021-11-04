@@ -14,8 +14,10 @@ class BayesianNetwork:
         self.bif_file_name: str = bif_file_name
         self.name = ""
         self.str = ""
+        self.traversal: List[str] = []
         self.nodes: dict[str, Node] = {}
-        #self.__generate_network_from_bif()          # this must be last in this method
+        self.roots: List[Node] = []
+        self.__generate_network_from_bif()          # this methods must be last in the constructor
 
     def __str__(self) -> str:
         if self.str == "":
@@ -26,6 +28,16 @@ class BayesianNetwork:
             return string
         else:
             return self.str
+
+    def __set_children(self) -> None:
+        stack = inspect.stack()[1]
+        caller_name: str = stack[3]
+        if caller_name != "__generate_network_from_bif":
+            raise OSError("BayesianNetwork.__set_children() can only be called from BayesianNetwork.__generate_network_from_bif()")
+        for key in self.get_nodes():
+            node = self.get_nodes().get(key)
+            for parent in node.parents:
+                self.get_node(parent).add_child(node.name)
 
     def __generate_network_from_bif(self) -> None:
         stack = inspect.stack()[1]
@@ -106,6 +118,7 @@ class BayesianNetwork:
                     iteration += 1
 
                     if line.startswith("  table"):  # root node probability table
+                        self.roots.append(nodes[-1])
                         probability_line_list: List[str] = deepcopy(line).replace(" ", "").replace(";", "").replace(
                             "table", "").replace("\n", "").split(",")
                         state_prob_list: List[Tuple[str, float]] = []
@@ -146,6 +159,27 @@ class BayesianNetwork:
             self.nodes = {}
             for node_obj in nodes:
                 self.nodes[node_obj.name] = node_obj
+        self.__set_children()
+        return None
+
+    def get_nodes(self) -> dict[str, Node]:
+        return self.nodes
+
+    def get_node(self, name: str) -> Node:
+        return self.nodes.get(name)
+
+    # def traverse(self) -> None:
+    #     for root in self.roots:
+    #         self._traverse(node=root.name)
+    #
+    # def _traverse(self, node: str) -> None:
+    #     if not self.get_node(node).visited:
+    #         self.traversal.append(node)
+    #     else:
+    #         self.get_node(node).visited = True
+    #     for child in self.get_node(node).children:
+    #         self._traverse(child)
+    #     return
 
     # arguments:
     # queries: a list of strings corresponding to the names of query variables
