@@ -17,11 +17,12 @@ class Factor():
                 for pair in key:
                     string += pair[0]
                     string += " "
-                string += self.name
-                string += "\n"
+                string += " | " + self.name
+                string += "\n-------\n"
                 headered = True
             for pair in key:
                 string += pair[1] + " "
+            string += "| "
             string += str(self.table[key])
             string += "\n"
         return string

@@ -107,7 +107,8 @@ class Node:
     #     return prob
 
     # Given some list of evidence, finds which evidence is relevant to itself and returns a subset of its dictionary if
-    # there are some unknown veriables and a float if there are zero unknown variables.
+    # there are some unknown veriables and a float if there are zero unknown variables, along with a list of labels of
+    # the unknown variables.
     def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]):
         common_variables = []
         for event in evidence:
@@ -188,7 +189,30 @@ def main():
     print("C")
     print(C)
 
-    print(A.probability_distribution_given_evidence([("C", "T"), ("B", "F"), ("A", "F")]))  # ("C", "F")
+    evidences = [ [("C", "F"), ("B", "F"), ("A", "F")],
+                  [("C", "F"), ("B", "F"), ("A", "T")],
+                  [("C", "F"), ("B", "T"), ("A", "F")],
+                  [("C", "F"), ("B", "T"), ("A", "T")],
+                  [("C", "T"), ("B", "F"), ("A", "F")],
+                  [("C", "T"), ("B", "F"), ("A", "T")],
+                  [("C", "T"), ("B", "T"), ("A", "F")],
+                  [("C", "T"), ("B", "T"), ("A", "T")],
+                  [("C", "T"), ("B", "T")],
+                  [("C", "T"), ("B", "F")],
+                  [("C", "F"), ("B", "T")],
+                  [("C", "F"), ("B", "F")],
+                  [("A", "T"), ("B", "T")],
+                  [("A", "T"), ("B", "F")],
+                  [("A", "F"), ("B", "T")],
+                  [("A", "F"), ("B", "F")],
+                  [("A", "T"), ("C", "T")],
+                  [("A", "T"), ("C", "F")],
+                  [("A", "F"), ("C", "T")],
+                  [("A", "F"), ("C", "F")]
+                  ]
+
+    for evidence in evidences:
+        print(A.probability_distribution_given_evidence(evidence))
 
 if __name__ == "__main__":
     main()

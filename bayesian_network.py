@@ -20,7 +20,7 @@ class BayesianNetwork:
         self.traversal: List[str] = []
         self.nodes: dict[str, Node] = {}
         self.roots: List[Node] = []
-        self.__generate_network_from_bif()          # this methods must be last in the constructor
+        #self.__generate_network_from_bif()          # this methods must be last in the constructor
 
     def __str__(self) -> str:
         if self.str == "":
@@ -219,15 +219,14 @@ class BayesianNetwork:
         indices.append(node)
         for parent in self.nodes[node].parents:
             indices.append(parent)
-        # not really necessary, but describes what the factor includes
+
+        # describes what the factor includes
         factor_name = "phi("
         for i in range(len(indices)):
             factor_name += indices[i]
             if i < len(indices) - 1:
                 factor_name += ","
         factor_name += ")"
-
-
 
         # creation of tables
         # identification of what values to use in each column
@@ -246,11 +245,6 @@ class BayesianNetwork:
             domains[index] = domain
 
         row_keys = list(self.product_dict(domains))
-        #
-        # row_keys: List[Tuple[Tuple]] = [None] * len(row_key_state_assignments)
-        # for i in range(len(row_key_state_assignments)):
-        #
-        #     row_keys[i] = tuple(zip(indices, row_key_state_assignments[i]))
 
         for i in range(len(row_keys)):
             row_key_assignments = []
@@ -260,11 +254,8 @@ class BayesianNetwork:
             row_keys[i] = row_key_assignments
 
         for key in row_keys:
-            table[tuple(key)] = self.nodes[node].probability_distribution_given_evidence([key])
-
-
+            table[tuple(key)] = self.nodes[node].probability_distribution_given_evidence(key)
         factor: Factor = Factor(table, indices, factor_name)
-
         return factor
 
     # TODO
