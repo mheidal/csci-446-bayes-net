@@ -30,7 +30,6 @@ class Node:
     def create_probability_table(self, state_relations: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]) -> None:
 
         for edge in state_relations:
-            print(edge)
             for child_state in edge[1]:
                 row_key = [None] * len(self.probability_table_indices)
                 row_key[self.probability_table_indices.index(self.name)] = child_state[0]
@@ -38,76 +37,12 @@ class Node:
                     row_key[self.probability_table_indices.index(parent_state[0])] = parent_state[1]
                 self.probability_table[tuple(row_key)] = child_state[1]
 
-
-        # for edge in state_relations:
-        #     row = [None] * (len(self.parents) + len(self.domain))
-        #     parent_states: List[Tuple[str, str]] = edge[0]
-        #     child_probabilities: List[Tuple[str, float]] = edge[1]
-        #     if not self.is_root:
-        #         for parent_state in parent_states:
-        #             parent_index: int = self.probability_table_indices.index(parent_state[0])
-        #             row[parent_index] = parent_state[1]
-        #     for child_state in child_probabilities:
-        #         child_index: int = self.probability_table_indices.index(child_state[0])
-        #         row[child_index] = child_state[1]
-        #     self.probability_table[tuple(parent_states)] = child_probabilities
-
     def set_as_evidence(self, state: str) -> None:
         self.is_evidence = True
         self.state = state
 
-    # arguments:
-    # evidence: a list of tuples of variable names and state assignments to those variables.
-    # def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]) -> List[float]:
-    #     evidence_parents = []
-    #     for event in evidence:
-    #         if event[0] in self.parents:
-    #             evidence_parents.append(event)
-    #     probabilities: List[float] = [0] * len(self.domain)
-    #     for row in self.probability_table:
-    #         row_matches_evidence: bool = True
-    #         for variable in evidence_parents:
-    #             if row[self.probability_table_indices.index(variable[0])] != variable[1]:
-    #                 row_matches_evidence = False
-    #         if row_matches_evidence:
-    #             for i in range(len(self.domain)):
-    #                 probabilities[i] += row[self.probability_table_indices.index(self.domain[i])]
-    #     total = sum(probabilities)
-    #     for i in range(len(probabilities)):
-    #         probabilities[i] = probabilities[i] / total
-    #
-    #     for event in evidence:
-    #         if event[0] == self.name:
-    #             return [probabilities[self.probability_table_indices.index(event[1]) - len(self.parents)]]
-    #     return probabilities
-
-    # def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]) -> List[float]:
-    #     evidence_parents = []
-    #     prob = []
-    #     for event in evidence:
-    #         if event[0] in self.parents:
-    #             evidence_parents.append(event)
-    #     probabilities: List[float] = [0] * len(self.domain)
-    #     for key in self.probability_table:
-    #         key_matches_evidence: bool = True
-    #         for variable in evidence_parents:
-    #             if key[self.probability_table_indices.index(variable[0])][1] != variable[1]:
-    #                 key_matches_evidence = False
-    #         if key_matches_evidence:
-    #             for i, domain_item in enumerate(self.domain):
-    #                 probabilities[i] += self.probability_table.get(key)[i][1]
-    #                 prob.append(self.probability_table.get(key)[i][1])
-    #     # total = sum(probabilities)
-    #     # for i in range(len(probabilities)):
-    #     #     probabilities[i] = probabilities[i] / total
-    #
-    #     for event in evidence:
-    #         if event[0] == self.name:
-    #             return [probabilities[self.probability_table_indices.index(event[1]) - len(self.parents)]]
-    #     return prob
-
     # Given some list of evidence, finds which evidence is relevant to itself and returns a subset of its dictionary if
-    # there are some unknown veriables and a float if there are zero unknown variables, along with a list of labels of
+    # there are some unknown variables and a float if there are zero unknown variables, along with a list of labels of
     # the unknown variables.
     def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]):
         common_variables = []
@@ -140,7 +75,7 @@ class Node:
                         row_key[unknowns.index(unknown)] = key[self.probability_table_indices.index(unknown)]
                     row_key = tuple(row_key)
                     probability_table_subset[row_key] = self.probability_table[key]
-            return (unknowns, probability_table_subset)
+            return unknowns, probability_table_subset
 
     def get_parents(self) -> List[str]:
         return self.parents
