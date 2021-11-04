@@ -19,26 +19,38 @@ class Node:
         self.probability_table_indices: List[str] = []
         self.probability_table: dict[Tuple[Tuple[str, str]], List[Tuple[str, float]]] = {}
 
+        self.probability_table_indices.append(self.name)
+
         if not self.is_root:
             for parent in self.parents:
                 self.probability_table_indices.append(parent)
 
-        for state in domain:
-            self.probability_table_indices.append(state)
+
 
     def create_probability_table(self, state_relations: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]) -> None:
+
         for edge in state_relations:
-            row = [None] * (len(self.parents) + len(self.domain))
-            parent_states: List[Tuple[str, str]] = edge[0]
-            child_probabilities: List[Tuple[str, float]] = edge[1]
-            if not self.is_root:
-                for parent_state in parent_states:
-                    parent_index: int = self.probability_table_indices.index(parent_state[0])
-                    row[parent_index] = parent_state[1]
-            for child_state in child_probabilities:
-                child_index: int = self.probability_table_indices.index(child_state[0])
-                row[child_index] = child_state[1]
-            self.probability_table[tuple(parent_states)] = child_probabilities
+            print(edge)
+            for child_state in edge[1]:
+                row_key = [None] * len(self.probability_table_indices)
+                row_key[self.probability_table_indices.index(self.name)] = child_state[0]
+                for parent_state in edge[0]:
+                    row_key[self.probability_table_indices.index(parent_state[0])] = parent_state[1]
+                self.probability_table[tuple(row_key)] = child_state[1]
+
+
+        # for edge in state_relations:
+        #     row = [None] * (len(self.parents) + len(self.domain))
+        #     parent_states: List[Tuple[str, str]] = edge[0]
+        #     child_probabilities: List[Tuple[str, float]] = edge[1]
+        #     if not self.is_root:
+        #         for parent_state in parent_states:
+        #             parent_index: int = self.probability_table_indices.index(parent_state[0])
+        #             row[parent_index] = parent_state[1]
+        #     for child_state in child_probabilities:
+        #         child_index: int = self.probability_table_indices.index(child_state[0])
+        #         row[child_index] = child_state[1]
+        #     self.probability_table[tuple(parent_states)] = child_probabilities
 
     def set_as_evidence(self, state: str) -> None:
         self.is_evidence = True
@@ -104,12 +116,17 @@ class Node:
     def add_child(self, child: str) -> None:
         self.children.append(child)
 
+    #TODO: MAKE WORK WITH MULTI-CHARACTER STATES AND VARIABLE NAMES
     def __str__(self) -> str:
         if self.string == "":
             string: str = ""
-            string = string + str(self.probability_table_indices) + "\n"
-            for key in self.probability_table:
-                string += f"key: {key}\tvalue: {self.probability_table.get(key)}\n"
+            for index in self.probability_table_indices:
+                string += index + " "
+            string += "\n"
+            for key, value in self.probability_table.items():
+                for state_assignment in key:
+                    string += state_assignment + " "
+                string += str(value) + "\n"
             self.string = string
             return string
         else:
