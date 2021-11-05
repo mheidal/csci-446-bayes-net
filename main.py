@@ -41,6 +41,8 @@ def main() -> None:
 
 # TODO: pointwise product method
 
+    print(bayesian_network)
+    print(f"Nodes: {len(bayesian_network.get_nodes())}")
 
 
 if __name__ == '__main__':

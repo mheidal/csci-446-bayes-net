@@ -8,16 +8,17 @@ from itertools import product
 from node import Node
 
 
+
 class BayesianNetwork:
-
-
 
     def __init__(self, bif_file_name: str) -> None:
         self.bif_file_name: str = bif_file_name
         self.name = ""
         self.str = ""
+        self.traversal: List[str] = []
         self.nodes: dict[str, Node] = {}
-        self.__generate_network_from_bif()          # this must be last in this method
+        self.roots: List[Node] = []
+        #self.__generate_network_from_bif()          # this methods must be last in the constructor
 
     def __str__(self) -> str:
         if self.str == "":
@@ -29,8 +30,15 @@ class BayesianNetwork:
         else:
             return self.str
 
-    def get_nodes(self) -> dict[str, Node]:
-        return self.nodes
+    def __set_children(self) -> None:
+        stack = inspect.stack()[1]
+        caller_name: str = stack[3]
+        if caller_name != "__generate_network_from_bif":
+            raise OSError("BayesianNetwork.__set_children() can only be called from BayesianNetwork.__generate_network_from_bif()")
+        for key in self.get_nodes():
+            node = self.get_nodes().get(key)
+            for parent in node.parents:
+                self.get_node(parent).add_child(node.name)
 
     def __generate_network_from_bif(self) -> None:
         stack = inspect.stack()[1]
@@ -111,6 +119,7 @@ class BayesianNetwork:
                     iteration += 1
 
                     if line.startswith("  table"):  # root node probability table
+                        self.roots.append(nodes[-1])
                         probability_line_list: List[str] = deepcopy(line).replace(" ", "").replace(";", "").replace(
                             "table", "").replace("\n", "").split(",")
                         state_prob_list: List[Tuple[str, float]] = []
@@ -151,129 +160,27 @@ class BayesianNetwork:
             self.nodes = {}
             for node_obj in nodes:
                 self.nodes[node_obj.name] = node_obj
+        self.__set_children()
+        return None
 
-    # arguments:
-    # queries: a list of strings corresponding to the names of query variables
-    # evidence: a list of tuples corresponding to names and states of evidence variables
-    def elim_ask(self, queries: List[str], evidence: List[Tuple[Node, str]]):
-        factors: List[Dict] = []
-        for node in self.nodes.keys():
-            factors.append(self.make_factors(node, evidence))
-
-    # Arguments: A node name, a list of evidence nodes and their values.
-    # Returns: A truth table of the node and its parents, with values restricted by evidence. For example, if the node
-    # has two parents and all three are booleans, then the resulting truth table will have 2x2x2=8 rows. If one of those
-    # nodes is listed as evidence, it will be treated as a node with a domain of length 1, and the resulting truth
-    # table will have 2x2x1 rows.
-    # Format of output: Dictionary.
-    #   - Keys: Tuple.
-    #       - Contents: Tuples.
-    #           - Contents: String corresponding to node name, string corresponding to node value.
-    #   - Value: A float.
-    #      - The probability of the child node having the value held in the key given that the parents have the values
-    #        given in the key.
-    def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Dict[Tuple[Tuple[str, str]], float]:
-        indices = []
-        indices.append(node)
-        for parent in self.nodes[node].parents:
-            indices.append(parent)
-        factor_name = "phi("
-        for i in range(len(indices)):
-            factor_name += indices[i]
-            if i < len(indices) - 1:
-                factor_name += ","
-        factor_name += ")"
-        table = {}
-        value_lists = []
-        for index in indices:
-            index_is_not_evidence: bool = True
-            col_values = []
-            for event in evidence:
-                if event[0] == index:
-                    index_is_not_evidence = False
-                    col_values.append(event[1])
-            if index_is_not_evidence:
-                for state in self.nodes[index].domain:
-                    col_values.append(state)
-            value_lists.append(col_values)
-
-        row_key_state_assignments: List[Tuple] = list(product(*value_lists))
-        row_keys: List[Tuple[Tuple]] = [None] * len(row_key_state_assignments)
-        for i in range(len(row_key_state_assignments)):
-            row_keys[i] = tuple(zip(indices, row_key_state_assignments[i]))
-
-        for key in row_keys:
-            table[key] = self.nodes[node].probability_distribution_given_evidence(list(key))
-        print(factor_name)
-        for key in table.keys():
-            print(key, ":", table[key])
-
-        return table
-
-
-    def pointwise_product(self, f1, f2):
-        pass
-
-    def get_node_order(self) -> List[Node]:
+    def get_nodes(self) -> dict[str, Node]:
         return self.nodes
 
-    def sum_out(self, node: str, factors: Dict):
-        pass
+    def get_node(self, name: str) -> Node:
+        return self.nodes.get(name)
 
-    def set_generations(self):
-        pass
+    # def traverse(self) -> None:
+    #     for root in self.roots:
+    #         self._traverse(node=root.name)
+    #
+    # def _traverse(self, node: str) -> None:
+    #     if not self.get_node(node).visited:
+    #         self.traversal.append(node)
+    #     else:
+    #         self.get_node(node).visited = True
+    #     for child in self.get_node(node).children:
+    #         self._traverse(child)
+    #     return
 
-
-def main():
-    print("Node test")
-    domain: List[str] = ["T", "F"]
-    B: Node = Node("B", domain, [])
-    E: Node = Node("E", domain, [])
-    A: Node = Node("A", domain, ["B", "E"])
-    J: Node = Node("J", domain, ["A"])
-    M: Node = Node("M", domain, ["A"])
-    B.create_probability_table([([], [("T", 0.001), ("F", 0.999)])])
-    E.create_probability_table([([], [("T", 0.002), ("F", 0.998)])])
-    A.create_probability_table([([("B", "F"), ("E", "F")], [("T", 0.001), ("F", 0.999)]),
-                                ([("B", "F"), ("E", "T")], [("T", 0.29), ("F", 0.71)]),
-                                ([("B", "T"), ("E", "F")], [("T", 0.94), ("F", 0.06)]),
-                                ([("B", "T"), ("E", "T")], [("T", 0.95), ("F", 0.05)]),
-                                ])
-    J.create_probability_table([([("A", "F")], [("T", 0.05), ("F", 0.95)]),
-                                ([("A", "T")], [("T", 0.9), ("F", 0.1)])
-                                ])
-    M.create_probability_table([([("A", "F")], [("T", 0.01), ("F", 0.99)]),
-                                ([("A", "T")], [("T", 0.7), ("F", 0.3)])
-                                ])
-
-    # B_relations = [([], [("T", 0.5), ("F", 0.5)])]
-    # C_relations = [([], [("T", 0.45), ("F", 0.55)])]
-    # A_relations = [([("B", "F"), ("C", "F")], [("T", 0.2), ("F", 0.8)]),
-    #                ([("B", "F"), ("C", "T")], [("T", 0.7), ("F", 0.3)]),
-    #                ([("B", "T"), ("C", "F")], [("T", 0.6), ("F", 0.4)]),
-    #                ([("B", "T"), ("C", "T")], [("T", 0.9), ("F", 0.1)]),
-    #                ]
-    # A.create_probability_table(A_relations)
-    # B.create_probability_table(B_relations)
-    # C.create_probability_table(C_relations)
-    # print("A")
-    # print(A)
-    # print("B")
-    # print(B)
-    # print("C")
-    # print(C)
-    # nodes = [A, B, C]
-    nodes = [B, E, A, J, M]
-    bn = BayesianNetwork("")
-    for node in nodes:
-        bn.nodes[node.name] = node
-
-    print('made bn')
-    print(bn)
-    print("Factors:")
-    bn.make_factors("B", [("B", "T")])
-
-
-
-if __name__ == "__main__":
-    main()
+    def get_node_order(self) -> Dict[str, Node]:
+        return self.nodes
