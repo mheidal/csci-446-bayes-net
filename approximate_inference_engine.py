@@ -10,10 +10,25 @@ class ApproximateInferenceEngine():
         self.N = 10000
         return
 
+    def dfs(self):
+        pass
+
+        # get root nodes.
+        # traverse root
+        # get children of roots
+        # traverse children of roots
+        # get children of children...
+
     def forward_sample(self, query, evidence: list) -> list:
 
 
         # traverse graph in order
+
+        for nodes in self.bn.roots:
+            #node = self.bn.nodes.get(key)
+        #create topological order
+        top_order = dfs()
+
         # at each node generate 'answer' based on probability
 
         # if random.randint(0, 100) < 50:
