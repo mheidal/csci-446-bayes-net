@@ -25,7 +25,8 @@ class Node:
             for parent in self.parents:
                 self.probability_table_indices.append(parent)
 
-
+    def __str__(self) -> str:
+        return self.name
 
     def create_probability_table(self, state_relations: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]) -> None:
 
@@ -84,20 +85,20 @@ class Node:
         self.children.append(child)
 
     #TODO: MAKE WORK WITH MULTI-CHARACTER STATES AND VARIABLE NAMES
-    def __str__(self) -> str:
-        if self.string == "":
-            string: str = ""
-            for index in self.probability_table_indices:
-                string += index + " "
-            string += "\n----------------\n"
-            for key, value in self.probability_table.items():
-                for state_assignment in key:
-                    string += state_assignment + " "
-                string += " | " + str(value) + "\n"
-            self.string = string
-            return string
-        else:
-            return self.string
+    # def __str__(self) -> str:
+    #     if self.string == "":
+    #         string: str = ""
+    #         for index in self.probability_table_indices:
+    #             string += index + " "
+    #         string += "\n----------------\n"
+    #         for key, value in self.probability_table.items():
+    #             for state_assignment in key:
+    #                 string += state_assignment + " "
+    #             string += " | " + str(value) + "\n"
+    #         self.string = string
+    #         return string
+    #     else:
+    #         return self.string
 
 
 def main():

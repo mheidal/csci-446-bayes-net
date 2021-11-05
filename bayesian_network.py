@@ -1,6 +1,7 @@
 import inspect
 from copy import deepcopy
 import platform
+from itertools import chain
 from typing import List, Tuple, Dict
 
 from node import Node
@@ -175,6 +176,44 @@ class BayesianNetwork:
 
     def get_node(self, name: str) -> Node:
         return self.nodes.get(name)
+
+    # def topological_order(self) -> List[Node]:
+    #     topological_ordering: List[Node] = deepcopy(self.roots)
+    #     roots: List[Node] = deepcopy(self.roots)
+    #     index: int = 0
+    #     while roots != []:
+    #         root_node = deepcopy(roots[index])
+    #         root_node.visited = True
+    #         roots.remove(roots[index])
+    #         for child_key in root_node.children:
+    #             child: Node = self.get_node(child_key)
+    #             child.visited = True
+    #     return topological_ordering
+
+    def dfs(self) -> List[Node]:
+        roots: List[Node] = deepcopy(self.roots)
+        generations: List[List[Node]] = [roots]  # children of previous generation
+        topological_ordering: List[Node] = []
+        current_generation: List[Node] = self.next_generation(roots, topological_ordering)
+        while current_generation != []:
+            generations.append(current_generation)
+            topological_ordering = list(chain.from_iterable(generations))
+            current_generation = self.next_generation(generations[len(generations)-2], topological_ordering)
+        return topological_ordering
+
+    def next_generation(self, current_generation: List[Node], current_ordering: List[Node]) -> List[Node]:
+        next_generation_list: List[Node] = []
+        for node in current_generation:
+            for child_key in node.children:
+                child: Node = self.get_node(child_key)
+                parents_in_ordering: bool = True
+                for parent_key in child.parents:
+                    parent: Node = self.get_node(parent_key)
+                    if parent not in current_ordering:
+                        parents_in_ordering = False
+                if child not in next_generation_list and parents_in_ordering is True:
+                    next_generation_list.append(child)
+        return next_generation_list
 
     # def traverse(self) -> None:
     #     for root in self.roots:
