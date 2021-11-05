@@ -84,6 +84,9 @@ class Node:
     def add_child(self, child: str) -> None:
         self.children.append(child)
 
+    def __eq__(self, other) -> bool:
+        return self.name == other.name
+
     #TODO: MAKE WORK WITH MULTI-CHARACTER STATES AND VARIABLE NAMES
     # def __str__(self) -> str:
     #     if self.string == "":

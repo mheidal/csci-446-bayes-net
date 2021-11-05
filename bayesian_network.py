@@ -193,12 +193,12 @@ class BayesianNetwork:
     def dfs(self) -> List[Node]:
         roots: List[Node] = deepcopy(self.roots)
         generations: List[List[Node]] = [roots]  # children of previous generation
-        topological_ordering: List[Node] = []
+        topological_ordering: List[Node] = roots
         current_generation: List[Node] = self.next_generation(roots, topological_ordering)
         while current_generation != []:
             generations.append(current_generation)
             topological_ordering = list(chain.from_iterable(generations))
-            current_generation = self.next_generation(generations[len(generations)-2], topological_ordering)
+            current_generation = self.next_generation(generations[len(generations)-1], topological_ordering)
         return topological_ordering
 
     def next_generation(self, current_generation: List[Node], current_ordering: List[Node]) -> List[Node]:
@@ -211,7 +211,7 @@ class BayesianNetwork:
                     parent: Node = self.get_node(parent_key)
                     if parent not in current_ordering:
                         parents_in_ordering = False
-                if child not in next_generation_list and parents_in_ordering is True:
+                if child not in next_generation_list and child not in current_ordering and parents_in_ordering is True:
                     next_generation_list.append(child)
         return next_generation_list
 
