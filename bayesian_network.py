@@ -1,10 +1,13 @@
 import inspect
 from copy import deepcopy
+import platform
 from typing import List, Tuple, Dict
 
 from node import Node
 
 
+# J | B is True
+# 94.5% True, 5.3% False
 
 class BayesianNetwork:
 
@@ -15,7 +18,7 @@ class BayesianNetwork:
         self.traversal: List[str] = []
         self.nodes: dict[str, Node] = {}
         self.roots: List[Node] = []
-        #self.__generate_network_from_bif()          # this methods must be last in the constructor
+        self.__generate_network_from_bif()          # this methods must be last in the constructor
 
     def __str__(self) -> str:
         if self.str == "":
@@ -31,7 +34,8 @@ class BayesianNetwork:
         stack = inspect.stack()[1]
         caller_name: str = stack[3]
         if caller_name != "__generate_network_from_bif":
-            raise OSError("BayesianNetwork.__set_children() can only be called from BayesianNetwork.__generate_network_from_bif()")
+            raise OSError(
+                "BayesianNetwork.__set_children() can only be called from BayesianNetwork.__generate_network_from_bif()")
         for key in self.get_nodes():
             node = self.get_nodes().get(key)
             for parent in node.parents:
@@ -42,7 +46,8 @@ class BayesianNetwork:
         caller_name: str = stack[3]
         if caller_name != "__init__":
             raise OSError("BayesianNetwork.__generate_network_from_bif() can only be called from constructor")
-        with open(f"networks\\{self.bif_file_name}", 'r') as network_file:
+        slashes: str = "\\" if platform.system() == 'Windows' else "/"
+        with open(f"networks{slashes}{self.bif_file_name}", 'r') as network_file:
             str_nodes = []  # str node format: [name, type, number_of_states, state names..., ]
             nodes: List[Node] = []
             iterable_network_file = iter(network_file)
@@ -80,6 +85,7 @@ class BayesianNetwork:
                             domain[1] = domain[1].replace(" };\n", "")
                             domain = domain[1].split(", ")
                             for state in domain:
+                                state = state.replace(" ", "")
                                 node.append(state)
                         line = next(iterable_network_file)
                         iteration += 1
@@ -91,7 +97,7 @@ class BayesianNetwork:
                     this_node: List[str] = []
                     domain: List[str] = []
 
-                    if "|" in probability_line:     # get node's parents if not root (root node does not have a '|')
+                    if "|" in probability_line:  # get node's parents if not root (root node does not have a '|')
                         node_name = probability_line[
                                     probability_line.index('(') + 1:probability_line.index('|')].replace(" ", "")
                         parents = probability_line[probability_line.index('|') + 1:probability_line.index(')')].replace(
@@ -109,7 +115,8 @@ class BayesianNetwork:
                     for state in range(0, int(this_node[2])):
                         domain.append(this_node[state + 3])
 
-                    nodes.append(Node(name=this_node[0], domain=domain, parents=parents))   # create node now that parents are known
+                    nodes.append(Node(name=this_node[0], domain=domain,
+                                      parents=parents))  # create node now that parents are known
                     node_index: int = len(nodes) - 1
 
                     line = next(iterable_network_file)
@@ -127,13 +134,16 @@ class BayesianNetwork:
                         nodes[node_index].create_probability_table(relation)
                         continue
 
-                    elif line.startswith("  ("):    # non-root node probability table
+                    elif line.startswith("  ("):  # non-root node probability table
 
                         relation: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]] = []
 
                         while not line.startswith('}'):
-                            parent_states: List[str] = deepcopy(line)[line.index("(")+1:line.index(")")].replace(" ", "").split(",")
-                            probability_of_node_states_for_parents: List[str] = deepcopy(line)[line.index(")")+1:len(line) - 2].replace(" ", "").split(",")
+                            parent_states: List[str] = deepcopy(line)[line.index("(") + 1:line.index(")")].replace(" ",
+                                                                                                                   "").split(
+                                ",")
+                            probability_of_node_states_for_parents: List[str] = deepcopy(line)[line.index(")") + 1:len(
+                                line) - 2].replace(" ", "").split(",")
 
                             parents_and_state: List[Tuple[str, str]] = []
                             for parent, state in zip(parents, parent_states):
