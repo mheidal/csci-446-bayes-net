@@ -44,7 +44,7 @@ class Node:
 
     def set_as_evidence(self, state: str) -> None:
         self.is_evidence = True
-        self.state = state
+        self.domain = [state]
 
     # arguments:
     # evidence: a list of tuples of variable names and state assignments to those variables.

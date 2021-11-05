@@ -17,7 +17,7 @@ class BayesianNetwork:
         self.name = ""
         self.str = ""
         self.nodes: dict[str, Node] = {}
-        #self.__generate_network_from_bif()          # this must be last in this method
+        self.__generate_network_from_bif()          # this must be last in this method
 
     def __str__(self) -> str:
         if self.str == "":
@@ -29,14 +29,15 @@ class BayesianNetwork:
         else:
             return self.str
 
-
+    def get_nodes(self) -> dict[str, Node]:
+        return self.nodes
 
     def __generate_network_from_bif(self) -> None:
         stack = inspect.stack()[1]
         caller_name: str = stack[3]
         if caller_name != "__init__":
             raise OSError("BayesianNetwork.__generate_network_from_bif() can only be called from constructor")
-        with open(f"networks\\{self.bif_file_name}", 'r') as network_file:
+        with open(f"networks/{self.bif_file_name}", 'r') as network_file:
             str_nodes = []  # str node format: [name, type, number_of_states, state names..., ]
             nodes: List[Node] = []
             iterable_network_file = iter(network_file)
@@ -218,6 +219,10 @@ class BayesianNetwork:
 
     def sum_out(self, node: str, factors: Dict):
         pass
+
+    def set_generations(self):
+        pass
+
 
 def main():
     print("Node test")

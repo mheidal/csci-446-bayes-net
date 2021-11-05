@@ -1,30 +1,36 @@
-from inference_engine import InferenceEngine
+#from inference_engine import InferenceEngine
 import random
+from bayesian_network import BayesianNetwork
 
-class ApproximateInferenceEngine(InferenceEngine):
-    def __init__(self, bayes_net: bayseian_network):
-        super().__init__(bayes_net)
+class ApproximateInferenceEngine():
+
+    def __init__(self, bayes_net: BayesianNetwork):
+        #super().__init__(bayes_net)
+        self.bn = bayes_net
         self.N = 10000
         return
 
-    def forward_sample(self, query, evidence: list, bayes_net: bayseian_network) -> list:
+    def forward_sample(self, query, evidence: list) -> list:
+
 
         # traverse graph in order
         # at each node generate 'answer' based on probability
-        if random.randint(0, 100) < 50:
-            pass
+
+        # if random.randint(0, 100) < 50:
+        #     pass
         #return list of generated sample
 
     def markov_blanket_varibales(self, var) -> list:
         pass
 
-    def gibbs_sampling(self, query, evidence: list, bayes_net: bayseian_network):
+    def gibbs_sampling(self, query, evidence: list):
         #get non_evidence variables
-        non_evidence_variables = []
-        for var in bayes_net.variables:
-            if var not in evidence:
-                if var != query:
-                    non_evidence_variables.append(var)
+        # non_evidence_variables = []
+        # for var in self.bn.nodes.keys:
+        #     if var not in evidence:
+        #         if var != query:
+        #             non_evidence_variables.append(var)
+
         # generate initial sample
         #initial_sample = self.forward_sample(non_evidence_variables)
 
@@ -32,12 +38,18 @@ class ApproximateInferenceEngine(InferenceEngine):
         #     i = random.choice(bayes_net.variable_value(i))
         #     initial_sample.append(i)
 
-        initial_sample = self.forward_sample(query, evidence, bayes_net)
+        non_evidence_variables = []
+        for key in self.bn.get_nodes():
+            if self.bn.nodes[key].is_evidence == False:
+                if key not in query:
+                    non_evidence_variables.append(key)
 
-        for n in range(self.N):
-            for var in non_evidence_variables:
-                markov_blanet = self.markov_blanket_varibales(var)
-                # compute P(var | varibales in vars markov blanket)
+        initial_sample = self.forward_sample(query, evidence)
+
+        # for n in range(self.N):
+        #     for var in non_evidence_variables:
+        #         markov_blanet = self.markov_blanket_varibales(var)
+        #         # compute P(var | varibales in vars markov blanket)
 
 
 
