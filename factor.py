@@ -4,10 +4,10 @@ from typing import Tuple
 
 # instantiated in make_factor, pointwise_product and sum_out methods of bayesian_network
 class Factor():
-    def __init__(self, table: Dict, variable_indices: List[str], name):
+    def __init__(self, table: Dict, variable_indices: List[str]):
         self.table: Dict[Tuple[Tuple[str, str], ...], float] = table
         self.variable_indices = variable_indices
-        self.name = name
+        self.make_name()
 
     def __str__(self):
         string = ""
@@ -26,3 +26,12 @@ class Factor():
             string += str(self.table[key])
             string += "\n"
         return string
+
+    def make_name(self):
+        factor_name = "phi("
+        for i in range(len(self.variable_indices)):
+            factor_name += self.variable_indices[i]
+            if i < len(self.variable_indices) - 1:
+                factor_name += ","
+        factor_name += ")"
+        self.name = factor_name

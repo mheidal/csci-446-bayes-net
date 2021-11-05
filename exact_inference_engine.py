@@ -17,11 +17,25 @@ class ExactInferenceEngine(InferenceEngine):
     # evidence: a list of tuples corresponding to names and states of evidence variables
     def elim_ask(self, queries: List[str], evidence: List[Tuple[str, str]]):
         factors: List[Factor] = []
+        evidence_vars: List[str] = []
+        for event in evidence:
+            evidence_vars.append(event[0])
         for node in self.bayesian_network.nodes.keys():
-            factors.append(self.make_factors(node, evidence))
-            if node not in queries and node not in evidence[:][0]:
-                self.sum_out(node, factors)
-        return (self.normalize(self.pointwise_product(factors)))
+            factor = self.make_factors(node, evidence)
+            factors.append(factor)
+
+        for node in self.bayesian_network.nodes.keys():
+            if node not in queries and node not in evidence_vars:
+                for i in range(len(factors) - 1, -1, -1):
+                    factors[i] = self.sum_out(node, factors[i])
+                    if factors[i] == False:
+                        factors.remove(factors[i])
+
+        result = factors.pop()
+        while factors:
+            result = self.pointwise_product(result, factors.pop())
+        result = self.normalize(result)
+        return result
 
     def product_dict(self, d: Dict):
         keys = d.keys()
@@ -47,14 +61,6 @@ class ExactInferenceEngine(InferenceEngine):
         indices.append(node)
         for parent in self.bayesian_network.nodes[node].parents:
             indices.append(parent)
-
-        # describes what the factor includes
-        factor_name = "phi("
-        for i in range(len(indices)):
-            factor_name += indices[i]
-            if i < len(indices) - 1:
-                factor_name += ","
-        factor_name += ")"
 
         # creation of tables
         # identification of what values to use in each column
@@ -83,10 +89,9 @@ class ExactInferenceEngine(InferenceEngine):
 
         for key in row_keys:
             table[tuple(key)] = self.bayesian_network.nodes[node].probability_distribution_given_evidence(key)
-        factor: Factor = Factor(table, indices, factor_name)
+        factor: Factor = Factor(table, indices)
         return factor
 
-    # TODO
     def pointwise_product(self, f1: Factor, f2: Factor):
         f1_exclusive_variables = []
         f2_exclusive_variables = []
@@ -105,13 +110,13 @@ class ExactInferenceEngine(InferenceEngine):
                     f1_exclusive_variables.remove(variable_state_assignment[0])
             break
 
-        print("Variables exclusive to f1:")
-        print(f1_exclusive_variables)
-
-        print("Variables exclusive to f2:")
-        print(f2_exclusive_variables)
-        print("shared variables:")
-        print(shared_variables)
+        # print("Variables exclusive to f1:")
+        # print(f1_exclusive_variables)
+        #
+        # print("Variables exclusive to f2:")
+        # print(f2_exclusive_variables)
+        # print("shared variables:")
+        # print(shared_variables)
 
         indices = []
         for f1_variable in f1_exclusive_variables:
@@ -121,17 +126,70 @@ class ExactInferenceEngine(InferenceEngine):
         for f2_variable in f2_exclusive_variables:
             indices.append(f2_variable)
 
-        print(indices)
+        new_dict: Dict[Tuple[Tuple[str], ...], float] = {}
+        for key_1 in f1.table.keys():
+            for key_2 in f2.table.keys():
+                new_row = [None] * (len(shared_variables) + len(f1_exclusive_variables) + len(f2_exclusive_variables))
+                rows_match = True
+                for shared_variable in shared_variables:
+                    if not key_1[f1.variable_indices.index(shared_variable)] == key_2[f2.variable_indices.index(shared_variable)]:
+                        rows_match = False
+                if rows_match:
+                    for index in indices:
+                        if index in f1_exclusive_variables or index in shared_variables:
+                            new_row[indices.index(index)] = key_1[f1.variable_indices.index(index)]
+                        elif index in f2_exclusive_variables:
+                            new_row[indices.index(index)] = key_2[f2.variable_indices.index(index)]
+                    new_row = tuple(new_row)
+                    new_dict[new_row] = f1.table[key_1] * f2.table[key_2]
 
-    pass
+        factor: Factor = Factor(new_dict, indices)
+        return factor
 
-    # TODO
-    def sum_out(self, node: str, factors: List[Factor]):
-        pass
+
+    def sum_out(self, node: str, factor: Factor) -> Factor:
+        new_table: Dict[Tuple[Tuple[str], ...], float] = {}
+        new_key_indices: List[int] = []
+        for index in factor.variable_indices:
+            if not index == node:
+                new_key_indices.append(factor.variable_indices.index(index))
+        if len(new_key_indices) == 0:
+            return False
+        row_marked = [False] * len(factor.table.keys())
+        for i, key in enumerate(factor.table.keys()):
+            if not row_marked[i]:
+                new_float: float = 0
+                new_float += factor.table[key]
+                row_marked[i] = True
+                for j, other_key in enumerate(factor.table.keys()):
+                    if not row_marked[j]:
+                        row_matches = True
+                        for index in new_key_indices:
+                                if not key[index] == other_key[index]:
+                                    row_matches = False
+                        if row_matches:
+                            row_marked[j] = True
+                            new_float += factor.table[other_key]
+                row_key = [None] * len(new_key_indices)
+                for k in range(len(new_key_indices)):
+                    row_key[k] = key[new_key_indices[k]]
+                row_key = tuple(row_key)
+                new_table[row_key] = new_float
+
+        new_key_index_names = [factor.variable_indices[m] for m in new_key_indices]
+        new_factor = Factor(new_table, new_key_index_names)
+        return new_factor
+
 
     #TODO
-    def normalize(self, arg):
-        pass
+    def normalize(self, factor: Factor) -> Factor:
+        norm: float = 0
+        for key in factor.table.keys():
+            norm += factor.table[key]
+        for key in factor.table.keys():
+            factor.table[key] = factor.table[key] / norm
+        return factor
+
 
 def main():
 
@@ -152,7 +210,8 @@ def main():
     # print("C")
     # print(C)
     # nodes = [A, B, C]
-    print("Factor test")
+
+
     domain: List[str] = ["T", "F"]
     B: Node = Node("B", domain, [])
     E: Node = Node("E", domain, [])
@@ -179,17 +238,85 @@ def main():
 
     print(bn)
     engine: ExactInferenceEngine = ExactInferenceEngine(bn)
-    print("Factors:")
+    # f = engine.make_factors("A", [("B", "T")])
+    # print(f)
+    # f = engine.sum_out("B", f)
+    # engine.normalize(f)
+    # print(f)
+    # f = engine.sum_out("E", f)
+    # print(f)
+    # engine.normalize(f)
+    # print(f)
+
+    # print("Factors:")
     factors = []
     # factor = bn.make_factors("A", [])
     # print(factor)
-    for i in ["B","E","A","J","M",]:
-        factor = engine.make_factors(i, [])
-        factors.append(factor)
-        print(factor)
-        print()
-    # bn.pointwise_product(factors[3], factors[4])
+    # for i in ["B","E","A","J","M",]:
+    #     factor = engine.make_factors(i, [])
+    #     factors.append(factor)
+    #     print(factor)
+    #     print()
+    #
+    # print("phi(A, B, E), before summing out B:")
+    # print(factors[2])
+    # print("after:")
+    # print(engine.sum_out("B", factors[2]))
+    # print("phi(B):")
+    # print(factors[0])
+    # print("phi(E):")
+    # print(factors[1])
+    # print("Pointwise product of B and E:")
+    # print(engine.pointwise_product(factors[0], factors[1]))
 
+    # x = engine.pointwise_product(
+        # engine.pointwise_product(
+        #     engine.pointwise_product(
+        #         engine.pointwise_product(factors[0],factors[1]),factors[2]),factors[3]),factors[4])
+    # x = engine.pointwise_product(factors[3], factors[4])
+    # print(x)
+    # engine.normalize(x)
+    # print(x)
+
+    # factor = factors[2]
+    # factor = engine.pointwise_product(factor, factors[0])
+    # factor = engine.sum_out("B", factor)
+    # print(factor)
+
+    # f = engine.make_factors("E", [])
+    # print(f)
+    # f = engine.sum_out("E", f)
+    #
+
+    # dict_x_y = {
+    #     (("X", "T"), ("Y", "T")): 0.3,
+    #     (("X", "T"), ("Y", "F")): 0.7,
+    #     (("X", "F"), ("Y", "T")): 0.9,
+    #     (("X", "F"), ("Y", "F")): 0.1,
+    # }
+    # indices_x_y = ["X", "Y"]
+    #
+    #
+    # dict_y_z = {
+    #     (("Y", "T"), ("Z", "T")): 0.2,
+    #     (("Y", "T"), ("Z", "F")): 0.8,
+    #     (("Y", "F"), ("Z", "T")): 0.6,
+    #     (("Y", "F"), ("Z", "F")): 0.4,
+    # }
+    # indices_y_z = ["Y", "Z"]
+    #
+    # f1 = Factor(dict_x_y, indices_x_y)
+    # print(f1)
+    # f2 = Factor(dict_y_z, indices_y_z)
+    # print(engine.pointwise_product(f1, f2))
+    # print(engine.normalize(engine.sum_out("Z", engine.pointwise_product(f1, f2))))
+
+    print("Begin elim ask.")
+    print(engine.elim_ask(["J"], [("B", "T")]))
+    print("End elim ask.")
+    print("Begin elim ask.")
+    print(engine.elim_ask(["B"], [("J", "T")]))
+    print("End elim ask.")
 
 if __name__ == "__main__":
     main()
