@@ -20,24 +20,38 @@ class ExactInferenceEngine(InferenceEngine):
         evidence_vars: List[str] = []
         for event in evidence:
             evidence_vars.append(event[0])
+
+        print("Query variable(s)                 :", queries)
+        print("Evidence variable(s) and value(s) :", evidence)
         for node in self.bayesian_network.nodes.keys():
             factor = self.make_factors(node, evidence)
             factors.append(factor)
 
-        for node in self.bayesian_network.nodes.keys():
-            if node not in queries and node not in evidence_vars:
-                for i in range(len(factors) - 1, -1, -1):
-                    factors[i] = self.sum_out(node, factors[i])
-                    if factors[i] == False:
-                        factors.remove(factors[i])
+        # for factor in factors:
+        #     print(factor)
+
+        # for node in self.bayesian_network.nodes.keys():
+        #     if node not in queries and node not in evidence_vars:
+        #         for i in range(len(factors) - 1, -1, -1):
+        #             factors[i] = self.sum_out(node, factors[i])
+        #             if factors[i] == False:
+        #                 factors.remove(factors[i])
+
+
 
         result = factors.pop()
         while factors:
             result = self.pointwise_product(result, factors.pop())
+
+        for node in self.bayesian_network.nodes.keys():
+            if node not in queries and node not in evidence_vars:
+                result = self.sum_out(node, result)
+
         result = self.normalize(result)
         return result
 
-    def product_dict(self, d: Dict):
+    @staticmethod
+    def product_dict(d: Dict):
         keys = d.keys()
         values = d.values()
         for instance in product(*values):
@@ -92,7 +106,8 @@ class ExactInferenceEngine(InferenceEngine):
         factor: Factor = Factor(table, indices)
         return factor
 
-    def pointwise_product(self, f1: Factor, f2: Factor):
+    @staticmethod
+    def pointwise_product(f1: Factor, f2: Factor):
         f1_exclusive_variables = []
         f2_exclusive_variables = []
         shared_variables = []
@@ -146,8 +161,8 @@ class ExactInferenceEngine(InferenceEngine):
         factor: Factor = Factor(new_dict, indices)
         return factor
 
-
-    def sum_out(self, node: str, factor: Factor) -> Factor:
+    @staticmethod
+    def sum_out(node: str, factor: Factor) -> Factor:
         new_table: Dict[Tuple[Tuple[str], ...], float] = {}
         new_key_indices: List[int] = []
         for index in factor.variable_indices:
@@ -180,16 +195,14 @@ class ExactInferenceEngine(InferenceEngine):
         new_factor = Factor(new_table, new_key_index_names)
         return new_factor
 
-
-    #TODO
-    def normalize(self, factor: Factor) -> Factor:
+    @staticmethod
+    def normalize(factor: Factor) -> Factor:
         norm: float = 0
         for key in factor.table.keys():
             norm += factor.table[key]
         for key in factor.table.keys():
             factor.table[key] = factor.table[key] / norm
         return factor
-
 
 def main():
 
@@ -249,7 +262,7 @@ def main():
     # print(f)
 
     # print("Factors:")
-    factors = []
+    # factors = []
     # factor = bn.make_factors("A", [])
     # print(factor)
     # for i in ["B","E","A","J","M",]:
@@ -312,10 +325,22 @@ def main():
     # print(engine.normalize(engine.sum_out("Z", engine.pointwise_product(f1, f2))))
 
     print("Begin elim ask.")
-    print(engine.elim_ask(["J"], [("B", "T")]))
+    print(engine.elim_ask(["J"], [("E", "T"), ("B", "T")]))
     print("End elim ask.")
     print("Begin elim ask.")
-    print(engine.elim_ask(["B"], [("J", "T")]))
+    print(engine.elim_ask(["J"], [("E", "F"), ("B", "T")]))
+    print("End elim ask.")
+    print("Begin elim ask.")
+    print(engine.elim_ask(["J"], [("E", "T"), ("B", "F")]))
+    print("End elim ask.")
+    print("Begin elim ask.")
+    print(engine.elim_ask(["J"], [("E", "F"), ("B", "F")]))
+    print("End elim ask.")
+    print("Begin elim ask.")
+    print(engine.elim_ask(["J"], [("B", "F")]))
+    print("End elim ask.")
+    print("Begin elim ask.")
+    print(engine.elim_ask(["B"], [("A", "T")]))
     print("End elim ask.")
 
 if __name__ == "__main__":
