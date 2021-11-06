@@ -43,10 +43,13 @@ def main() -> None:
         for evidence in evidences[network]:
             exact_inference_engine_test(bayesian_network, queries[network], evidence)
 
-    # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
+    bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
     # print(bayesian_network)
     # print(f"Nodes: {len(bayesian_network.get_nodes())}")
 
+    ordering = bayesian_network.dfs()
+    print(ordering)
+    print(len(ordering))
 
 if __name__ == '__main__':
     main()
