@@ -15,7 +15,8 @@ class BayesianNetwork:
         self.traversal: List[str] = []
         self.nodes: dict[str, Node] = {}
         self.roots: List[Node] = []
-        #self.__generate_network_from_bif()          # this methods must be last in the constructor
+        if not bif_file_name == "":
+            self.__generate_network_from_bif()          # this methods must be last in the constructor
 
     def __str__(self) -> str:
         if self.str == "":
@@ -109,7 +110,7 @@ class BayesianNetwork:
                     for state in range(0, int(this_node[2])):
                         domain.append(this_node[state + 3])
 
-                    nodes.append(Node(name=this_node[0], domain=domain, parents=parents))   # create node now that parents are known
+                    nodes.append(Node(name=this_node[0].replace(" ", ""), domain=domain, parents=parents))   # create node now that parents are known
                     node_index: int = len(nodes) - 1
 
                     line = next(iterable_network_file)

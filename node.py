@@ -21,6 +21,7 @@ class Node:
 
         self.probability_table_indices.append(self.name)
 
+
         if not self.is_root:
             for parent in self.parents:
                 self.probability_table_indices.append(parent)
@@ -32,9 +33,9 @@ class Node:
         for edge in state_relations:
             for child_state in edge[1]:
                 row_key = [None] * len(self.probability_table_indices)
-                row_key[self.probability_table_indices.index(self.name)] = child_state[0]
+                row_key[self.probability_table_indices.index(self.name)] = child_state[0].strip(" ")
                 for parent_state in edge[0]:
-                    row_key[self.probability_table_indices.index(parent_state[0])] = parent_state[1]
+                    row_key[self.probability_table_indices.index(parent_state[0])] = parent_state[1].strip(" ")
                 self.probability_table[tuple(row_key)] = child_state[1]
 
     def set_as_evidence(self, state: str) -> None:

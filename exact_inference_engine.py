@@ -23,30 +23,44 @@ class ExactInferenceEngine(InferenceEngine):
 
         print("Query variable(s)                 :", queries)
         print("Evidence variable(s) and value(s) :", evidence)
+        print("Creating factors.")
         for node in self.bayesian_network.nodes.keys():
             factor = self.make_factors(node, evidence)
             factors.append(factor)
-
-        # for factor in factors:
-        #     print(factor)
-
-        # for node in self.bayesian_network.nodes.keys():
-        #     if node not in queries and node not in evidence_vars:
-        #         for i in range(len(factors) - 1, -1, -1):
-        #             factors[i] = self.sum_out(node, factors[i])
-        #             if factors[i] == False:
-        #                 factors.remove(factors[i])
-
-
-
-        result = factors.pop()
-        while factors:
-            result = self.pointwise_product(result, factors.pop())
+        print("Created factors.")
 
         for node in self.bayesian_network.nodes.keys():
             if node not in queries and node not in evidence_vars:
-                result = self.sum_out(node, result)
+                factors_with_this_node: List[Factor] = []
+                for factor in factors:
+                    if node in factor.variable_indices:
+                        factors_with_this_node.append(factor)
+                print("Reducing", len(factors_with_this_node), "factors to one, converging around", node)
+                meganode: Factor = None
+                for factor in factors_with_this_node:
+                    if meganode is None:
+                        meganode = factor
+                    else:
+                        meganode = self.pointwise_product(meganode, factor)
+                    factors.remove(factor)
+                meganode = self.sum_out(node, meganode)
+                factors.append(meganode)
 
+
+        print("Performing pointwise product.")
+        result = factors.pop()
+        while factors:
+            result = self.pointwise_product(result, factors.pop())
+            print(len(factors), "factor(s) remain.")
+            print("Length of megatable is", len(result.table))
+        print("Performed pointwise product.")
+        #
+        # print("Summing out.")
+        # for node in self.bayesian_network.nodes.keys():
+        #     print("Summing out", node)
+        #     if node not in queries and node not in evidence_vars:
+        #         result = self.sum_out(node, result)
+        # print("Summed out.")
         result = self.normalize(result)
         return result
 
@@ -86,10 +100,10 @@ class ExactInferenceEngine(InferenceEngine):
             for event in evidence:
                 if event[0] == index:
                     index_is_not_evidence = False
-                    domain = [event[1]]
+                    domain = [event[1].strip(" ")]
             if index_is_not_evidence:
                 for state in self.bayesian_network.nodes[index].domain:
-                    domain.append(state)
+                    domain.append(state.strip(" "))
             domains[index] = domain
 
         row_keys = list(self.product_dict(domains))
@@ -97,8 +111,9 @@ class ExactInferenceEngine(InferenceEngine):
         for i in range(len(row_keys)):
             row_key_assignments = []
             for key in row_keys[i].keys():
-                for value in row_keys[i][key]:
-                    row_key_assignments.append((key, value))
+                #for value in row_keys[i][key]:
+                #    row_key_assignments.append((key, value))
+                row_key_assignments.append((key, row_keys[i][key]))
             row_keys[i] = row_key_assignments
 
         for key in row_keys:
@@ -261,15 +276,17 @@ def main():
     # engine.normalize(f)
     # print(f)
 
-    # print("Factors:")
-    # factors = []
+    print("Factors:")
+    factors = []
     # factor = bn.make_factors("A", [])
     # print(factor)
-    # for i in ["B","E","A","J","M",]:
-    #     factor = engine.make_factors(i, [])
-    #     factors.append(factor)
-    #     print(factor)
-    #     print()
+    for i in ["B","E","A","J","M",]:
+        factor = engine.make_factors(i, [])
+        factors.append(factor)
+        print(factor)
+        print()
+    print("quality")
+    print(engine.sum_out("A", factors[4]))
     #
     # print("phi(A, B, E), before summing out B:")
     # print(factors[2])
@@ -283,13 +300,13 @@ def main():
     # print(engine.pointwise_product(factors[0], factors[1]))
 
     # x = engine.pointwise_product(
-        # engine.pointwise_product(
-        #     engine.pointwise_product(
-        #         engine.pointwise_product(factors[0],factors[1]),factors[2]),factors[3]),factors[4])
-    # x = engine.pointwise_product(factors[3], factors[4])
-    # print(x)
-    # engine.normalize(x)
-    # print(x)
+    #     engine.pointwise_product(
+    #         engine.pointwise_product(
+    #             engine.pointwise_product(factors[0],factors[1]),factors[2]),factors[3]),factors[4])
+    x = engine.pointwise_product(factors[3], factors[4])
+    print(x)
+    engine.normalize(x)
+    print(x)
 
     # factor = factors[2]
     # factor = engine.pointwise_product(factor, factors[0])
@@ -325,7 +342,7 @@ def main():
     # print(engine.normalize(engine.sum_out("Z", engine.pointwise_product(f1, f2))))
 
     print("Begin elim ask.")
-    print(engine.elim_ask(["J"], [("E", "T"), ("B", "T")]))
+    print(engine.elim_ask(["J"], []))
     print("End elim ask.")
     print("Begin elim ask.")
     print(engine.elim_ask(["J"], [("E", "F"), ("B", "T")]))
@@ -340,7 +357,7 @@ def main():
     print(engine.elim_ask(["J"], [("B", "F")]))
     print("End elim ask.")
     print("Begin elim ask.")
-    print(engine.elim_ask(["B"], [("A", "T")]))
+    print(engine.elim_ask(["J", "M"], [("B", "T")]))
     print("End elim ask.")
 
 if __name__ == "__main__":
