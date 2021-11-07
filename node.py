@@ -1,12 +1,17 @@
 from typing import List
 from typing import Tuple
 
+
 # all nodes have their children
 # probability distrib for node
 # sum_out
 
 class Node:
-    def __init__(self, name: str, domain: List[str], parents: List[str], is_evidence: bool = False, state: str = None) -> None:
+    """
+    Class representing a Node in a Bayesian Network.
+    """
+    def __init__(self, name: str, domain: List[str], parents: List[str], is_evidence: bool = False,
+                 state: str = None) -> None:
         self.name: str = name
         self.domain: List[str] = domain
         self.is_evidence: bool = is_evidence
@@ -18,28 +23,32 @@ class Node:
         self.visited: bool = False
         self.probability_table_indices: List[str] = []
         self.probability_table: dict[Tuple[Tuple[str, str]], List[Tuple[str, float]]] = {}
-
         self.probability_table_indices.append(self.name)
-
-
         if not self.is_root:
             for parent in self.parents:
                 self.probability_table_indices.append(parent)
 
-    def __str__(self) -> str:
-        return self.name
-
-    def create_probability_table(self, state_relations: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]) -> None:
-
+    def create_probability_table(self,
+                                 state_relations: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]) -> None:
+        """
+        Creates the probability table for this Node given the state relations state_relations.
+        :param state_relations: state relations for this Node.
+        :return: None.
+        """
         for edge in state_relations:
             for child_state in edge[1]:
                 row_key = [None] * len(self.probability_table_indices)
-                row_key[self.probability_table_indices.index(self.name)] = child_state[0].strip(" ")
+                row_key[self.probability_table_indices.index(self.name)] = child_state[0]
                 for parent_state in edge[0]:
-                    row_key[self.probability_table_indices.index(parent_state[0])] = parent_state[1].strip(" ")
+                    row_key[self.probability_table_indices.index(parent_state[0])] = parent_state[1]
                 self.probability_table[tuple(row_key)] = child_state[1]
 
     def set_as_evidence(self, state: str) -> None:
+        """
+        Sets a state of this Node as evidence.
+        :param state: State in this Node's domain to be evidence.
+        :return: None.
+        """
         self.is_evidence = True
         self.state = state
 
@@ -80,29 +89,48 @@ class Node:
             return unknowns, probability_table_subset
 
     def get_parents(self) -> List[str]:
+        """
+        Gets the names of this Nodes parents as a List of strings
+        :return: List of names of parents of this Node.
+        """
         return self.parents
 
     def add_child(self, child: str) -> None:
+        """
+        Adds a Node as a child of this node
+        :param child: name of a Node to add as a child to this Node.
+        :return: None.
+        """
         self.children.append(child)
 
     def __eq__(self, other) -> bool:
+        """
+        Allows this Node to evaluate the equality of this Node to another Node.
+        :param other: Node to evaluate equate to this Node to.
+        :return: True if this Node and other are the same Nodes. Otherwise False.
+        """
         return self.name == other.name
 
-    #TODO: MAKE WORK WITH MULTI-CHARACTER STATES AND VARIABLE NAMES
-    # def __str__(self) -> str:
-    #     if self.string == "":
-    #         string: str = ""
-    #         for index in self.probability_table_indices:
-    #             string += index + " "
-    #         string += "\n----------------\n"
-    #         for key, value in self.probability_table.items():
-    #             for state_assignment in key:
-    #                 string += state_assignment + " "
-    #             string += " | " + str(value) + "\n"
-    #         self.string = string
-    #         return string
-    #     else:
-    #         return self.string
+    def __str__(self) -> str:
+        """
+        Overrides the default __str()__ method.
+        Implements memoization to reduce time required on subsequent calls.
+        :return: str representation of this Node.
+        """
+        if self.string == "":
+            string: str = ""
+            for index in self.probability_table_indices:
+                string += index + " "
+            string += "\n----------------\n"
+            for key, value in self.probability_table.items():
+                for state_assignment in key:
+                    string += state_assignment
+                    string += " "
+                string += " | " + str(value) + "\n"
+            self.string = string
+            return string
+        else:
+            return self.string
 
 
 def main():
@@ -129,30 +157,31 @@ def main():
     print("C")
     print(C)
 
-    evidences = [ [("C", "F"), ("B", "F"), ("A", "F")],
-                  [("C", "F"), ("B", "F"), ("A", "T")],
-                  [("C", "F"), ("B", "T"), ("A", "F")],
-                  [("C", "F"), ("B", "T"), ("A", "T")],
-                  [("C", "T"), ("B", "F"), ("A", "F")],
-                  [("C", "T"), ("B", "F"), ("A", "T")],
-                  [("C", "T"), ("B", "T"), ("A", "F")],
-                  [("C", "T"), ("B", "T"), ("A", "T")],
-                  [("C", "T"), ("B", "T")],
-                  [("C", "T"), ("B", "F")],
-                  [("C", "F"), ("B", "T")],
-                  [("C", "F"), ("B", "F")],
-                  [("A", "T"), ("B", "T")],
-                  [("A", "T"), ("B", "F")],
-                  [("A", "F"), ("B", "T")],
-                  [("A", "F"), ("B", "F")],
-                  [("A", "T"), ("C", "T")],
-                  [("A", "T"), ("C", "F")],
-                  [("A", "F"), ("C", "T")],
-                  [("A", "F"), ("C", "F")]
-                  ]
+    evidences = [[("C", "F"), ("B", "F"), ("A", "F")],
+                 [("C", "F"), ("B", "F"), ("A", "T")],
+                 [("C", "F"), ("B", "T"), ("A", "F")],
+                 [("C", "F"), ("B", "T"), ("A", "T")],
+                 [("C", "T"), ("B", "F"), ("A", "F")],
+                 [("C", "T"), ("B", "F"), ("A", "T")],
+                 [("C", "T"), ("B", "T"), ("A", "F")],
+                 [("C", "T"), ("B", "T"), ("A", "T")],
+                 [("C", "T"), ("B", "T")],
+                 [("C", "T"), ("B", "F")],
+                 [("C", "F"), ("B", "T")],
+                 [("C", "F"), ("B", "F")],
+                 [("A", "T"), ("B", "T")],
+                 [("A", "T"), ("B", "F")],
+                 [("A", "F"), ("B", "T")],
+                 [("A", "F"), ("B", "F")],
+                 [("A", "T"), ("C", "T")],
+                 [("A", "T"), ("C", "F")],
+                 [("A", "F"), ("C", "T")],
+                 [("A", "F"), ("C", "F")]
+                 ]
 
     for evidence in evidences:
         print(A.probability_distribution_given_evidence(evidence))
+
 
 if __name__ == "__main__":
     main()

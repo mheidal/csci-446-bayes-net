@@ -11,6 +11,9 @@ from node import Node
 # 94.5% True, 5.3% False
 
 class BayesianNetwork:
+    """
+    Class BayesianNetwork representing a static Bayesian Network.
+    """
 
     def __init__(self, bif_file_name: str) -> None:
         self.bif_file_name: str = bif_file_name
@@ -20,9 +23,14 @@ class BayesianNetwork:
         self.nodes: dict[str, Node] = {}
         self.roots: List[Node] = []
         if not bif_file_name == "":
-            self.__generate_network_from_bif()          # this methods must be last in the constructor
+            self.__generate_network_from_bif()  # this methods must be last in the constructor
 
     def __str__(self) -> str:
+        """
+        Overrides the default __str()__ method.
+        Implements memoization to reduce time required on subsequent calls.
+        :return: str representation of this BayesianNetwork.
+        """
         if self.str == "":
             string: str = ""
             for key in self.nodes:
@@ -33,6 +41,10 @@ class BayesianNetwork:
             return self.str
 
     def __set_children(self) -> None:
+        """
+        Adds a reference from each child node to it's parent. Allows for easier ordering in Gibbs Sampling.
+        :return: None.
+        """
         stack = inspect.stack()[1]
         caller_name: str = stack[3]
         if caller_name != "__generate_network_from_bif":
@@ -44,6 +56,10 @@ class BayesianNetwork:
                 self.get_node(parent).add_child(node.name)
 
     def __generate_network_from_bif(self) -> None:
+        """
+        Parses a BIF file and generates Nodes with probabilities given by their probability tables.
+        :return: None.
+        """
         stack = inspect.stack()[1]
         caller_name: str = stack[3]
         if caller_name != "__init__":
@@ -173,25 +189,25 @@ class BayesianNetwork:
         return None
 
     def get_nodes(self) -> dict[str, Node]:
+        """
+        Gets all the nodes in this BayesianNetwork as a dict of Nodes with keys being the name of a Node.
+        :return: dict of all of the Nodes in this Network.
+        """
         return self.nodes
 
     def get_node(self, name: str) -> Node:
+        """
+        Gets a Node in this BayesianNetwork by its name name
+        :param name: str representation of the name of the node to
+        :return:
+        """
         return self.nodes.get(name)
 
-    # def topological_order(self) -> List[Node]:
-    #     topological_ordering: List[Node] = deepcopy(self.roots)
-    #     roots: List[Node] = deepcopy(self.roots)
-    #     index: int = 0
-    #     while roots != []:
-    #         root_node = deepcopy(roots[index])
-    #         root_node.visited = True
-    #         roots.remove(roots[index])
-    #         for child_key in root_node.children:
-    #             child: Node = self.get_node(child_key)
-    #             child.visited = True
-    #     return topological_ordering
-
-    def dfs(self) -> List[Node]:
+    def topological_ordering(self) -> List[Node]:
+        """
+        Generates a topological ordering for this BayesianNetwork by implementing a modified iterative breadth-first-search.
+        :return: A topological ordering of the Nodes in this BayesianNetwork.
+        """
         roots: List[Node] = deepcopy(self.roots)
         generations: List[List[Node]] = [roots]  # children of previous generation
         topological_ordering: List[Node] = roots
@@ -199,10 +215,16 @@ class BayesianNetwork:
         while current_generation != []:
             generations.append(current_generation)
             topological_ordering = list(chain.from_iterable(generations))
-            current_generation = self.next_generation(generations[len(generations)-1], topological_ordering)
+            current_generation = self.next_generation(generations[len(generations) - 1], topological_ordering)
         return topological_ordering
 
     def next_generation(self, current_generation: List[Node], current_ordering: List[Node]) -> List[Node]:
+        """
+        Implemented by topological_ordering(). Generates the next set of nodes in this BayesianNetwork whose parents have already been visited and are not already in this generation.
+        :param current_generation: The last generated generation for this BayesianNetwork.
+        :param current_ordering: The current ordering generated from topological_ordering().
+        :return: This generation of Nodes in this BayesianNetwork.
+        """
         next_generation_list: List[Node] = []
         for node in current_generation:
             for child_key in node.children:
@@ -215,19 +237,3 @@ class BayesianNetwork:
                 if child not in next_generation_list and child not in current_ordering and parents_in_ordering is True:
                     next_generation_list.append(child)
         return next_generation_list
-
-    # def traverse(self) -> None:
-    #     for root in self.roots:
-    #         self._traverse(node=root.name)
-    #
-    # def _traverse(self, node: str) -> None:
-    #     if not self.get_node(node).visited:
-    #         self.traversal.append(node)
-    #     else:
-    #         self.get_node(node).visited = True
-    #     for child in self.get_node(node).children:
-    #         self._traverse(child)
-    #     return
-
-    def get_node_order(self) -> Dict[str, Node]:
-        return self.nodes

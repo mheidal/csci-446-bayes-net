@@ -1,5 +1,6 @@
 from typing import List, Tuple, Dict
 
+from node import Node
 from bayesian_network import BayesianNetwork
 from exact_inference_engine import ExactInferenceEngine
 
@@ -49,9 +50,14 @@ def main() -> None:
     # print(bayesian_network)
     # print(f"Nodes: {len(bayesian_network.get_nodes())}")
 
-    ordering = bayesian_network.dfs()
+    # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
+    bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
+    print(bayesian_network)
+    print(f"Nodes: {len(bayesian_network.get_nodes())}")
+    ordering: List[Node] = bayesian_network.topological_ordering()
     print(ordering)
     print(len(ordering))
+
 
 if __name__ == '__main__':
     main()
