@@ -10,8 +10,8 @@ def exact_inference_engine_test(bayesian_network: BayesianNetwork, queries: List
 
 def main() -> None:
     # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
-    #networks: List[str] = ["alarm.bif", "child.bif", "hailfinder.bif", "insurance.bif" "win95pts.bif"]
-    networks: List[str] = ["alarm.bif", "child.bif", "insurance.bif", "win95pts.bif"]
+    networks: List[str] = ["alarm.bif", "child.bif", "hailfinder.bif", "insurance.bif", "win95pts.bif"]
+    # networks: List[str] = ["win95pts.bif"]
     # networks: List[str] = ["child.bif"]
     evidences: Dict[str, List[List[Tuple[str, str]]]] = {
         "alarm.bif": [[("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH")],
@@ -19,15 +19,15 @@ def main() -> None:
         "child.bif": [[("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy")],
                       [("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy"), ("GruntingReport", "yes"), ("LVHReport", "yes"), "Age", "11-30_days"]],
         "hailfinder.bif": [[("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet")],
-                           [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet"),("CombVerMo", "Down"),("AreaMeso_ALS", "Down"),("CurPropConv", "Strong"),("", ""),]],
+                          [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet"),("CombVerMo", "Down"),("AreaMeso_ALS", "Down"),("CurPropConv", "Strong")]],
         "insurance.bif": [[("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor")],
-                          [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor"),("MakeModel", "Luxury"),("CarValue", "FiftyThousand"),("DrivHistory", "Zero")]],
+                          [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor"),("MakeModel", "Luxury"),("CarValue", "FiftyThou"),("DrivHistory", "Zero")]],
         "win95pts.bif": [[("Problem1", "No_Output")],
                          [("Problem2", "Too_Long")],
-                         [("Problem2", "No")],
-                         [("Problem2", "No")],
-                         [("Problem2", "No")],
-                         [("Problem2", "Yes")]
+                         [("Problem3", "No")],
+                         [("Problem4", "No")],
+                         [("Problem5", "No")],
+                         [("Problem6", "Yes")]
                          ]
     }
     queries: Dict[str, List[str]] = {
@@ -39,9 +39,11 @@ def main() -> None:
 
     }
     for network in networks:
+        print("Network is", network)
         bayesian_network: BayesianNetwork = BayesianNetwork(network)
         for evidence in evidences[network]:
-            exact_inference_engine_test(bayesian_network, queries[network], evidence)
+            for query in queries[network]:
+                exact_inference_engine_test(bayesian_network, [query], evidence)
 
     bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
     # print(bayesian_network)
