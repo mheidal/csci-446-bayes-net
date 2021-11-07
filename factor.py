@@ -33,7 +33,9 @@ class Factor():
             for pair in key:
                 string += pair[1] + str(" " * (len(longest_element) - len(pair[1]))) + " "
             string += "| "
-            string += str(100*round(self.table[key], 5)) + "%" + str(" " * (len(longest_element) - len(str(100*round(self.table[key], 5))) - 1))
+            # string += str(100*round(self.table[key], 5)) + "%" + str(" " * (len(longest_element) - len(str(100*round(self.table[key], 5))) - 1))
+            string += str(100 * self.table[key]) + "%" + str(
+                " " * (len(longest_element) - len(str(100 * self.table[key])) - 1))
             string += "\n"
         return string
 
