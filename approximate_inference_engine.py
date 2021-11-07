@@ -7,7 +7,7 @@ class ApproximateInferenceEngine():
 
     def gibbs_sampling(self, list_of_nodes: list, evidence: list, bayes_net: BayesianNetwork, N=10000):
         # get evidence
-        # generate initial sample from non evidence varibales
+        # generate initial sample from non evidence variables
         generated_initial_sample = []
         for i in list_of_nodes:
             if i not in evidence:
