@@ -2,6 +2,11 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+# Represents a factor.
+# Main data structure is a dictionary which represents a truth table. One key to the dictionary is a row of the truth
+# table, and the value of that key is the associated value in the truth table.
+# Each key is a tuple of strings. Each key represents a unique configuration of values for the variables which are
+# included in the factor. Factors are represented in the tuple in the order they appear in the array variable_indices.
 # instantiated in make_factor, pointwise_product and sum_out methods of bayesian_network
 class Factor():
     def __init__(self, table: Dict, variable_indices: List[str]):
@@ -9,6 +14,8 @@ class Factor():
         self.variable_indices = variable_indices
         self.make_name()
 
+    # Default to_string method. Returns a table representing every configuration of every variable in the factor and
+    # the associated value.
     def __str__(self):
         string = ""
         headered = False
@@ -39,6 +46,10 @@ class Factor():
             string += "\n"
         return string
 
+    # Creates a string representing which variables are included in the factor. If variables X, Y, and Z are included
+    # in the factor, then the string is of the format "phi(X, Y, Z)".
+    # Arguments: none.
+    # Returns: none.
     def make_name(self):
         factor_name = "phi("
         for i in range(len(self.variable_indices)):
@@ -48,6 +59,13 @@ class Factor():
         factor_name += ")"
         self.name = factor_name
 
+    # Returns a string showing a nice-looking, evently-spaced and labeled representation of the probability
+    # distributions of all query variables in the factor. Note that this method was used in testing the functionality
+    # of other methods, but is not used in the final output of the program.
+    # Arguments:
+    # - queries: a list of strings representing query variables.
+    # Returns:
+    # - A string representing a table containing probability distributions of each query variable in the factor.
     def output_query_only(self, queries: List[str]):
         relevant_queries = []
         for index in self.variable_indices:
@@ -85,7 +103,14 @@ class Factor():
             string += "\n"
         return string
 
-    def output_to_latex_with_query(self, queries, title):
+    # Returns a string representation of the probabilities of all query variables in a factor.
+    # String is formatted in LaTeX table format to permit easy copy-and-paste into a document.
+    # Arguments:
+    # - queries: a list of strings representing query variables.
+    # - title: the title of the table to be produced.
+    # Returns:
+    # - a string formatted in LaTeX displaying the probability distribution of each query variable in the factor.
+    def output_to_latex_with_query(self, queries: List[str], title: str):
         string = ""
         string += r"\begin{center}" + "\n" + title + r"\\" + "\n" + r"\begin{tabular}{ |c|c|c| }" + "\n" + r"\hline" + " Variable Name&Value&Probability" + r"\\" + "\n"
         for key in self.table.keys():

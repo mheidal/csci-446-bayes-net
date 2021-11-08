@@ -1,11 +1,6 @@
 from typing import List
 from typing import Tuple
 
-
-# all nodes have their children
-# probability distrib for node
-# sum_out
-
 class Node:
     """
     Class representing a Node in a Bayesian Network.
@@ -32,7 +27,8 @@ class Node:
                                  state_relations: List[Tuple[List[Tuple[str, str]], List[Tuple[str, float]]]]) -> None:
         """
         Creates the probability table for this Node given the state relations state_relations.
-        :param state_relations: state relations for this Node.
+        :param state_relations: state relations for this Node. A list of elements corresponding to rows in the truth
+        table for this Node and the values associated with those rows.
         :return: None.
         """
         for edge in state_relations:

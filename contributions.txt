@@ -4,6 +4,5 @@ bayesian_network.py: Mike Heidal, Walker Ward
 contributions.txt: Mike Heidal
 exact_inference_engine.py: Mike Heidal
 factor.py: Mike Heidal
-inference_engine.py: Walker Ward
 main.py: Mike Heidal, Noah Cunningham, Walker Ward
 node.py: Mike Heidal, Walker Ward

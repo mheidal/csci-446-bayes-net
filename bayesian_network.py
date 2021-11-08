@@ -6,10 +6,6 @@ from typing import List, Tuple, Dict
 
 from node import Node
 
-
-# J | B is True
-# 94.5% True, 5.3% False
-
 class BayesianNetwork:
     """
     Class BayesianNetwork representing a static Bayesian Network.
