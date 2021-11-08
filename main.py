@@ -25,23 +25,32 @@ def output_evidence_as_latex(evidence: List[Tuple[str, str]], title: str) -> Non
 # Gibbs sampling: TODO
 def main() -> None:
     networks: List[str] = ["alarm.bif", "child.bif", "hailfinder.bif", "insurance.bif", "win95pts.bif"]
+    # evidences: Dict[str, List[List[Tuple[str, str]]]] = {
+    #     "alarm.bif": [[], [("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH")],
+    #                  [("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH"), ("HRSAT", "LOW"), ("HREKG", "LOW"),("HISTORY", "TRUE")]],
+    #     "child.bif": [[], [("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy")],
+    #                   [("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy"), ("GruntingReport", "yes"), ("LVHReport", "yes"), "Age", "11-30_days"]],
+    #     "hailfinder.bif": [[], [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet")],
+    #                       [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet"),("CombVerMo", "Down"),("AreaMeso_ALS", "Down"),("CurPropConv", "Strong")]],
+    #     "insurance.bif": [[], [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor")],
+    #                       [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor"),("MakeModel", "Luxury"),("CarValue", "FiftyThou"),("DrivHistory", "Zero")]],
+    #     "win95pts.bif": [[], [("Problem1", "No_Output")],
+    #                      [("Problem2", "Too_Long")],
+    #                      [("Problem3", "No")],
+    #                      [("Problem4", "No")],
+    #                      [("Problem5", "No")],
+    #                      [("Problem6", "Yes")]
+    #                      ]
+    # }
+
     evidences: Dict[str, List[List[Tuple[str, str]]]] = {
-        "alarm.bif": [[("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH")],
-                     [("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH"), ("HRSAT", "LOW"), ("HREKG", "LOW"),("HISTORY", "TRUE")]],
-        "child.bif": [[("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy")],
-                      [("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy"), ("GruntingReport", "yes"), ("LVHReport", "yes"), "Age", "11-30_days"]],
-        "hailfinder.bif": [[("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet")],
-                          [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet"),("CombVerMo", "Down"),("AreaMeso_ALS", "Down"),("CurPropConv", "Strong")]],
-        "insurance.bif": [[("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor")],
-                          [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor"),("MakeModel", "Luxury"),("CarValue", "FiftyThou"),("DrivHistory", "Zero")]],
-        "win95pts.bif": [[("Problem1", "No_Output")],
-                         [("Problem2", "Too_Long")],
-                         [("Problem3", "No")],
-                         [("Problem4", "No")],
-                         [("Problem5", "No")],
-                         [("Problem6", "Yes")]
-                         ]
+        "alarm.bif": [[]],
+        "child.bif": [[]],
+        "hailfinder.bif": [[]],
+        "insurance.bif": [[]],
+        "win95pts.bif": [[]]
     }
+
     queries: Dict[str, List[str]] = {
         "alarm.bif": ["HYPOVOLEMIA", "LVFAILURE", "ERRLOWOUTPUT"],
         "child.bif": ["Disease"],
