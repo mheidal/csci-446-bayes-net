@@ -93,4 +93,4 @@ class Factor():
                 if pair[0] in queries:
                     string += r"\hline " + pair[0] + " & " + pair[1] + " & " + str(round(100 * self.table[key], 5)) + r"\%" + r"\\" + "\n"
         string += r"\hline " + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
-        return string
+        return string.replace("_", r"\_")
