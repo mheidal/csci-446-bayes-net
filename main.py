@@ -17,11 +17,14 @@ def output_evidence_as_latex(evidence: List[Tuple[str, str]], title: str) -> Non
     string += r"\hline " + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
     print(string)
 
+# Variable elimination:
+# - Creates lists of networks, query variables and evidence sets.
+# - Iterates through each of these lists to find the probability distribution of each query variable given each evidence
+#   set in every network.
+# - Outputs each probability distribution in LaTeX format.
+# Gibbs sampling: TODO
 def main() -> None:
-    # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
     networks: List[str] = ["alarm.bif", "child.bif", "hailfinder.bif", "insurance.bif", "win95pts.bif"]
-    # networks: List[str] = ["win95pts.bif"]
-    # networks: List[str] = ["child.bif"]
     evidences: Dict[str, List[List[Tuple[str, str]]]] = {
         "alarm.bif": [[("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH")],
                      [("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH"), ("HRSAT", "LOW"), ("HREKG", "LOW"),("HISTORY", "TRUE")]],
