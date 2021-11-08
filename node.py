@@ -46,7 +46,7 @@ class Node:
         :return: None.
         """
         self.is_evidence = True
-        self.state = state
+        self.domain = [state]
 
     # Given some list of evidence, finds which evidence is relevant to itself and returns a subset of its dictionary if
     # there are some unknown variables and a float if there are zero unknown variables, along with a list of labels of
