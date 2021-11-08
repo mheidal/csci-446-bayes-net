@@ -9,6 +9,7 @@ class ApproximateInferenceEngine():
         #super().__init__(bayes_net)
         self.bn = bayes_net
         self.N = 10000
+        self.iterations: int = 0
         return
 
     def markov_blanket(self, node) -> list:
