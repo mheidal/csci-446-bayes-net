@@ -3,6 +3,7 @@ from bayesian_network import BayesianNetwork
 
 class ApproximateInferenceEngine():
     def __init__(self, bayes_net: BayesianNetwork):
+        self.iterations: int = 0
         return
 
     def gibbs_sampling(self, list_of_nodes: list, evidence: list, bayes_net: BayesianNetwork, N=10000):

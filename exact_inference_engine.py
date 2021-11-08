@@ -10,6 +10,7 @@ verbose_logging: bool = False
 class ExactInferenceEngine:
 
     def __init__(self, bayesian_network: BayesianNetwork):
+        self.iterations: int = 0
         self.bayesian_network: BayesianNetwork = bayesian_network
         return
 
@@ -21,6 +22,7 @@ class ExactInferenceEngine:
         evidence_vars: List[str] = []
         for event in evidence:
             evidence_vars.append(event[0])
+            self.iterations += 1
         if verbose_logging:
             print("Query variable(s)                 :", queries)
             print("Evidence variable(s) and value(s) :", evidence)
@@ -28,6 +30,7 @@ class ExactInferenceEngine:
         for node in self.bayesian_network.nodes.keys():
             factor = self.make_factor(node, evidence)
             factors.append(factor)
+            self.iterations += 1
         if verbose_logging:
             print("Created factors.")
 
@@ -35,6 +38,7 @@ class ExactInferenceEngine:
         for key in self.bayesian_network.nodes.keys():
             if key not in queries and key not in evidence_vars :
                 variables.append(key)
+            self.iterations += 1
         next_node: str = self.get_next_variable_to_sum_out(factors, variables)
 
         while next_node is not None:
@@ -42,6 +46,7 @@ class ExactInferenceEngine:
             for factor in factors:
                 if next_node in factor.variable_indices:
                     factors_with_this_node.append(factor)
+                self.iterations += 1
             if verbose_logging:
                 print("Reducing", len(factors_with_this_node), "factors to one, converging around", next_node)
                 print("There are", len(factors), "factors.")
@@ -54,11 +59,12 @@ class ExactInferenceEngine:
                         print("        Multiplying by a factor with", len(factor.table), "rows, megafactor has", len(megafactor.table), "rows.")
                     megafactor = self.pointwise_product(megafactor, factor)
                 factors.remove(factor)
+                self.iterations += 1
             megafactor = self.sum_out(next_node, megafactor)
             factors.append(megafactor)
             variables.remove(next_node)
             next_node = self.get_next_variable_to_sum_out(factors, variables)
-
+            self.iterations += 1
 
         if verbose_logging:
             print("Performing pointwise product.")
@@ -68,6 +74,7 @@ class ExactInferenceEngine:
             if verbose_logging:
                 print(len(factors), "factor(s) remain.")
                 print("Length of megatable is", len(result.table))
+            self.iterations += 1
         if verbose_logging:
             print("Performed pointwise product.")
         result = self.normalize(result)
@@ -76,11 +83,11 @@ class ExactInferenceEngine:
     # Helper function. Yields a list containing every combination of keys and values in a dictionary.
     # Used in make_factors to create every permutation of values from several nodes' domains to create truth tables.
     # Source: https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
-    @staticmethod
-    def product_dict(d: Dict):
+    def product_dict(self, d: Dict):
         keys = d.keys()
         values = d.values()
         for instance in product(*values):
+            self.iterations += 1
             yield(dict(zip(keys, instance)))
 
     # Arguments: A node name, a list of evidence nodes and their values.
@@ -101,7 +108,7 @@ class ExactInferenceEngine:
         indices.append(node)
         for parent in self.bayesian_network.nodes[node].parents:
             indices.append(parent)
-
+            self.iterations += 1
         # creation of tables
         # identification of what values to use in each column
         table = {}
@@ -113,10 +120,13 @@ class ExactInferenceEngine:
                 if event[0] == index:
                     index_is_not_evidence = False
                     domain = [event[1].strip(" ")]
+                self.iterations += 1
             if index_is_not_evidence:
                 for state in self.bayesian_network.nodes[index].domain:
                     domain.append(state.strip(" "))
+                self.iterations += 1
             domains[index] = domain
+            self.iterations += 1
 
         row_keys = list(self.product_dict(domains))
 
@@ -124,10 +134,13 @@ class ExactInferenceEngine:
             row_key_assignments = []
             for key in row_keys[i].keys():
                 row_key_assignments.append((key, row_keys[i][key]))
+                self.iterations += 1
             row_keys[i] = row_key_assignments
+            self.iterations += 1
 
         for key in row_keys:
             table[tuple(key)] = self.bayesian_network.nodes[node].probability_distribution_given_evidence(key)
+            self.iterations += 1
         factor: Factor = Factor(table, indices)
         return factor
 
@@ -143,14 +156,15 @@ class ExactInferenceEngine:
     # - f2: the other factor.
     # Returns:
     # - A new factor which is the pointwise product of the first two factors.
-    @staticmethod
-    def pointwise_product(f1: Factor, f2: Factor):
+    def pointwise_product(self, f1: Factor, f2: Factor):
         f1_exclusive_variables = []
         f2_exclusive_variables = []
         shared_variables = []
         for variable_state_assignments in f1.table.keys():
             for variable_state_assignment in variable_state_assignments:
                 f1_exclusive_variables.append(variable_state_assignment[0])
+                self.iterations += 1
+            self.iterations += 1
             break
 
         for variable_state_assignments in f2.table.keys():
@@ -160,15 +174,20 @@ class ExactInferenceEngine:
                 else:
                     shared_variables.append(variable_state_assignment[0])
                     f1_exclusive_variables.remove(variable_state_assignment[0])
+                self.iterations += 1
+            self.iterations += 1
             break
 
         indices = []
         for f1_variable in f1_exclusive_variables:
             indices.append(f1_variable)
+            self.iterations += 1
         for shared_variable in shared_variables:
             indices.append(shared_variable)
+            self.iterations += 1
         for f2_variable in f2_exclusive_variables:
             indices.append(f2_variable)
+            self.iterations += 1
 
         new_dict: Dict[Tuple[Tuple[str], ...], float] = {}
         for key_1 in f1.table.keys():
@@ -178,14 +197,18 @@ class ExactInferenceEngine:
                 for shared_variable in shared_variables:
                     if not key_1[f1.variable_indices.index(shared_variable)] == key_2[f2.variable_indices.index(shared_variable)]:
                         rows_match = False
+                    self.iterations += 1
                 if rows_match:
                     for index in indices:
                         if index in f1_exclusive_variables or index in shared_variables:
                             new_row[indices.index(index)] = key_1[f1.variable_indices.index(index)]
                         elif index in f2_exclusive_variables:
                             new_row[indices.index(index)] = key_2[f2.variable_indices.index(index)]
+                        self.iterations += 1
                     new_row = tuple(new_row)
                     new_dict[new_row] = f1.table[key_1] * f2.table[key_2]
+                self.iterations += 1
+            self.iterations += 1
 
         factor: Factor = Factor(new_dict, indices)
         return factor
@@ -200,13 +223,13 @@ class ExactInferenceEngine:
     # - factor: A factor from which the variable should be summed out.
     # Returns:
     # - new_factor: A modification of factor with the variable summed out.
-    @staticmethod
-    def sum_out(node: str, factor: Factor) -> Factor:
+    def sum_out(self, node: str, factor: Factor) -> Factor:
         new_table: Dict[Tuple[Tuple[str], ...], float] = {}
         new_key_indices: List[int] = []
         for index in factor.variable_indices:
             if not index == node:
                 new_key_indices.append(factor.variable_indices.index(index))
+            self.iterations += 1
         if len(new_key_indices) == 0:
             return False
         row_marked = [False] * len(factor.table.keys())
@@ -221,14 +244,18 @@ class ExactInferenceEngine:
                         for index in new_key_indices:
                                 if not key[index] == other_key[index]:
                                     row_matches = False
+                                self.iterations += 1
                         if row_matches:
                             row_marked[j] = True
                             new_float += factor.table[other_key]
+                    self.iterations += 1
                 row_key = [None] * len(new_key_indices)
                 for k in range(len(new_key_indices)):
                     row_key[k] = key[new_key_indices[k]]
+                    self.iterations += 1
                 row_key = tuple(row_key)
                 new_table[row_key] = new_float
+            self.iterations += 1
 
         new_key_index_names = [factor.variable_indices[m] for m in new_key_indices]
         new_factor = Factor(new_table, new_key_index_names)
@@ -240,13 +267,14 @@ class ExactInferenceEngine:
     # - factor: The factor to be normalized.
     # Returns:
     # - factor: The same factor, normalized.
-    @staticmethod
-    def normalize(factor: Factor) -> Factor:
+    def normalize(self, factor: Factor) -> Factor:
         norm: float = 0
         for key in factor.table.keys():
             norm += factor.table[key]
+            self.iterations += 1
         for key in factor.table.keys():
             factor.table[key] = factor.table[key] / norm
+            self.iterations += 1
         return factor
 
     # Used in var_elim to determine which variable to sum out next. var_elim returns the same answer no matter the order
@@ -269,6 +297,8 @@ class ExactInferenceEngine:
             for factor in factors:
                 if variable_complexities[i] in factor.variable_indices:
                     count += len(factor.table)
+                self.iterations += 1
             variable_complexities[i] = [variable_complexities[i], count]
+            self.iterations += 1
         variable_complexities = sorted(variable_complexities, key=lambda variable: variable[1])
         return variable_complexities[0][0]
