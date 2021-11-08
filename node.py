@@ -55,7 +55,7 @@ class Node:
     # Given some list of evidence, finds which evidence is relevant to itself and returns a subset of its dictionary if
     # there are some unknown variables and a float if there are zero unknown variables, along with a list of labels of
     # the unknown variables.
-    def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]):
+    def probability_distribution_given_evidence(self, evidence: List[Tuple[str, str]]):  # [(parent_name, parent_state)...]
         common_variables = []
         for event in evidence:
             if event[0] in self.probability_table_indices:
