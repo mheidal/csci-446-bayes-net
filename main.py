@@ -5,9 +5,17 @@ from bayesian_network import BayesianNetwork
 from exact_inference_engine import ExactInferenceEngine
 
 
-def exact_inference_engine_test(bayesian_network: BayesianNetwork, queries: List[str], evidence: List[Tuple[str, str]]):
+def exact_inference_engine_test(bayesian_network: BayesianNetwork, queries: List[str], evidence: List[Tuple[str, str]], title: str):
     engine: ExactInferenceEngine = ExactInferenceEngine(bayesian_network)
-    print(engine.elim_ask(queries, evidence))
+    print(engine.elim_ask(queries, evidence).output_to_latex_with_query(queries, title))
+
+def output_evidence_as_latex(evidence: List[Tuple[str, str]], title: str) -> None:
+    string = ""
+    string += r"\begin{center}" + "\n" + title + r"\\" + "\n" + r"\begin{tabular}{ |c|c| }" + "\n" + r"\hline" + " Variable Name&Value" + r"\\" + "\n"
+    for event in evidence:
+        string += r"\hline " + event[0] + " & " + event[1] + r"\\" + "\n"
+    string += r"\hline " + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
+    print(string)
 
 def main() -> None:
     # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
@@ -34,18 +42,20 @@ def main() -> None:
     queries: Dict[str, List[str]] = {
         "alarm.bif": ["HYPOVOLEMIA", "LVFAILURE", "ERRLOWOUTPUT"],
         "child.bif": ["Disease"],
-        "hailfinder.bif": ["SatContMoise", "LLIW"],
+        "hailfinder.bif": ["SatContMoist", "LLIW"],
         "insurance.bif": ["MedCost", "ILiCost", "PropCost"],
         "win95pts.bif": ["Problem1","Problem2","Problem3","Problem4","Problem5","Problem6"]
 
     }
     for network in networks:
-        print("Network is", network)
-        bayesian_network: BayesianNetwork = BayesianNetwork(network)
-        for evidence in evidences[network]:
-            for query in queries[network]:
-                exact_inference_engine_test(bayesian_network, [query], evidence)
 
+        bayesian_network: BayesianNetwork = BayesianNetwork(network)
+        for i, evidence in enumerate(evidences[network]):
+            output_evidence_as_latex(evidence, network + " evidence set " + str(i))
+            print()
+            for query in queries[network]:
+                exact_inference_engine_test(bayesian_network, [query], evidence, "Probability distribution of " + query + " in network " + network + " with evidence set " + str(i))
+                print()
     bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
     # print(bayesian_network)
     # print(f"Nodes: {len(bayesian_network.get_nodes())}")

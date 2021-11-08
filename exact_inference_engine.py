@@ -22,13 +22,12 @@ class ExactInferenceEngine(InferenceEngine):
         evidence_vars: List[str] = []
         for event in evidence:
             evidence_vars.append(event[0])
-
-        print("Query variable(s)                 :", queries)
-        print("Evidence variable(s) and value(s) :", evidence)
         if verbose_logging:
+            print("Query variable(s)                 :", queries)
+            print("Evidence variable(s) and value(s) :", evidence)
             print("Creating factors.")
         for node in self.bayesian_network.nodes.keys():
-            factor = self.make_factors(node, evidence)
+            factor = self.make_factor(node, evidence)
             factors.append(factor)
         if verbose_logging:
             print("Created factors.")
@@ -117,7 +116,7 @@ class ExactInferenceEngine(InferenceEngine):
     #   - Value: A float.
     #      - The probability of the child node having the value held in the key given that the parents have the values
     #        given in the key.
-    def make_factors(self, node: str, evidence: List[Tuple[str, str]]) -> Factor:
+    def make_factor(self, node: str, evidence: List[Tuple[str, str]]) -> Factor:
         # identification of what variables are included
         indices = []
         indices.append(node)
