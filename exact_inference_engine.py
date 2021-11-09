@@ -7,6 +7,7 @@ from factor import Factor
 
 verbose_logging: bool = False
 
+
 class ExactInferenceEngine:
 
     def __init__(self, bayesian_network: BayesianNetwork):
@@ -36,7 +37,7 @@ class ExactInferenceEngine:
 
         variables = []
         for key in self.bayesian_network.nodes.keys():
-            if key not in queries and key not in evidence_vars :
+            if key not in queries and key not in evidence_vars:
                 variables.append(key)
             self.iterations += 1
         next_node: str = self.get_next_variable_to_sum_out(factors, variables)
@@ -56,7 +57,8 @@ class ExactInferenceEngine:
                     megafactor = factor
                 else:
                     if verbose_logging:
-                        print("        Multiplying by a factor with", len(factor.table), "rows, megafactor has", len(megafactor.table), "rows.")
+                        print("        Multiplying by a factor with", len(factor.table), "rows, megafactor has",
+                              len(megafactor.table), "rows.")
                     megafactor = self.pointwise_product(megafactor, factor)
                 factors.remove(factor)
                 self.iterations += 1
@@ -88,7 +90,7 @@ class ExactInferenceEngine:
         values = d.values()
         for instance in product(*values):
             self.iterations += 1
-            yield(dict(zip(keys, instance)))
+            yield (dict(zip(keys, instance)))
 
     # Arguments: A node name, a list of evidence nodes and their values.
     # Returns: A factor containing truth table of the node and its parents, with values restricted by evidence. For
@@ -195,7 +197,8 @@ class ExactInferenceEngine:
                 new_row = [None] * (len(shared_variables) + len(f1_exclusive_variables) + len(f2_exclusive_variables))
                 rows_match = True
                 for shared_variable in shared_variables:
-                    if not key_1[f1.variable_indices.index(shared_variable)] == key_2[f2.variable_indices.index(shared_variable)]:
+                    if not key_1[f1.variable_indices.index(shared_variable)] == key_2[
+                        f2.variable_indices.index(shared_variable)]:
                         rows_match = False
                     self.iterations += 1
                 if rows_match:
@@ -242,9 +245,9 @@ class ExactInferenceEngine:
                     if not row_marked[j]:
                         row_matches = True
                         for index in new_key_indices:
-                                if not key[index] == other_key[index]:
-                                    row_matches = False
-                                self.iterations += 1
+                            if not key[index] == other_key[index]:
+                                row_matches = False
+                            self.iterations += 1
                         if row_matches:
                             row_marked[j] = True
                             new_float += factor.table[other_key]

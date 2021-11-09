@@ -6,6 +6,7 @@ from typing import List, Tuple, Dict
 
 from node import Node
 
+
 class BayesianNetwork:
     """
     Class BayesianNetwork representing a static Bayesian Network.
