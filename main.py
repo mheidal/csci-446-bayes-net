@@ -10,17 +10,17 @@ from approximate_inference_engine import ApproximateInferenceEngine
 
 
 
-def exact_inference_engine_test(bayesian_network: BayesianNetwork, queries: List[str], evidence: List[Tuple[str, str]], title: str):
-    engine: ExactInferenceEngine = ExactInferenceEngine(bayesian_network)
-    print(engine.elim_ask(queries, evidence).output_to_latex_with_query(queries, title))
-
-def output_evidence_as_latex(evidence: List[Tuple[str, str]], title: str) -> None:
-    string = ""
-    string += r"\begin{center}" + "\n" + title + r"\\" + "\n" + r"\begin{tabular}{ |c|c| }" + "\n" + r"\hline" + " Variable Name&Value" + r"\\" + "\n"
-    for event in evidence:
-        string += r"\hline " + event[0] + " & " + event[1] + r"\\" + "\n"
-    string += r"\hline " + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
-    print(string)
+# def exact_inference_engine_test(bayesian_network: BayesianNetwork, queries: List[str], evidence: List[Tuple[str, str]], title: str):
+#     engine: ExactInferenceEngine = ExactInferenceEngine(bayesian_network)
+#     print(engine.elim_ask(queries, evidence).output_to_latex_with_query(queries, title))
+#
+# def output_evidence_as_latex(evidence: List[Tuple[str, str]], title: str) -> None:
+#     string = ""
+#     string += r"\begin{center}" + "\n" + title + r"\\" + "\n" + r"\begin{tabular}{ |c|c| }" + "\n" + r"\hline" + " Variable Name&Value" + r"\\" + "\n"
+#     for event in evidence:
+#         string += r"\hline " + event[0] + " & " + event[1] + r"\\" + "\n"
+#     string += r"\hline " + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
+#     print(string)
 
 # Variable elimination:
 # - Creates lists of networks, query variables and evidence sets.
@@ -28,18 +28,19 @@ def output_evidence_as_latex(evidence: List[Tuple[str, str]], title: str) -> Non
 #   set in every network.
 # - Outputs each probability distribution in LaTeX format.
 # Gibbs sampling: TODO
+
 def main() -> None:
     networks: List[str] = ["alarm.bif", "child.bif", "hailfinder.bif", "insurance.bif", "win95pts.bif"]
     evidences: Dict[str, List[List[Tuple[str, str]]]] = {
-        "alarm.bif": [[("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH")],
+        "alarm.bif": [[],[("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH")],
                      [("HRBP", "HIGH"), ("CO", "LOW"), ("BP", "HIGH"), ("HRSAT", "LOW"), ("HREKG", "LOW"),("HISTORY", "TRUE")]],
-        "child.bif": [[("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy")],
+        "child.bif": [[], [("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy")],
                       [("LowerBody02", "<5"),("RUQO2", "12+"),("CO2Report", ">=7.5"),("XrayReport", "Asy/Patchy"), ("GruntingReport", "yes"), ("LVHReport", "yes"), "Age", "11-30_days"]],
-        "hailfinder.bif": [[("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet")],
+        "hailfinder.bif": [[], [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet")],
                           [("R5Fcst", "XNIL"),("N32StarFcst", "XNIL"),("MountainFCST", "XNIL"),("AreaMoDryAir", "VeryWet"),("CombVerMo", "Down"),("AreaMeso_ALS", "Down"),("CurPropConv", "Strong")]],
-        "insurance.bif": [[("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor")],
+        "insurance.bif": [[], [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor")],
                           [("Age", "Adolescent"),("GoodStudent", "True"),("SeniorTrain", "False"),("DrivQuality", "Poor"),("MakeModel", "Luxury"),("CarValue", "FiftyThou"),("DrivHistory", "Zero")]],
-        "win95pts.bif": [[("Problem1", "No_Output")],
+        "win95pts.bif": [[], [("Problem1", "No_Output")],
                          [("Problem2", "Too_Long")],
                          [("Problem3", "No")],
                          [("Problem4", "No")],
@@ -55,27 +56,59 @@ def main() -> None:
         "win95pts.bif": ["Problem1","Problem2","Problem3","Problem4","Problem5","Problem6"]
 
     }
-    for network in networks:
-
-        bayesian_network: BayesianNetwork = BayesianNetwork(network)
-        for i, evidence in enumerate(evidences[network]):
-            output_evidence_as_latex(evidence, network + " evidence set " + str(i))
-            print()
-            for query in queries[network]:
-                exact_inference_engine_test(bayesian_network, [query], evidence, "Probability distribution of " + query + " in network " + network + " with evidence set " + str(i))
-                print()
-    bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
+#     for network in networks:
+#
+#         bayesian_network: BayesianNetwork = BayesianNetwork(network)
+#         for i, evidence in enumerate(evidences[network]):
+#             output_evidence_as_latex(evidence, network + " evidence set " + str(i))
+#             print()
+#             for query in queries[network]:
+#                 exact_inference_engine_test(bayesian_network, [query], evidence, "Probability distribution of " + query + " in network " + network + " with evidence set " + str(i))
+#                 print()
+#     bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
     # print(bayesian_network)
     # print(f"Nodes: {len(bayesian_network.get_nodes())}")
 
     # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
-    bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
-    bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
+    #bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
+    #bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
     #bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
     #print(bayesian_network)
 
-    approximate_inference_engine: ApproximateInferenceEngine = ApproximateInferenceEngine(bayesian_network)
-    approximate_inference_engine.gibbs_sampling([],[])
+    def output_to_latex_with_query(output, queries: List[str], title: str):
+        string = ""
+        string += r"\begin{center}" + "\n" + title + r"\\" + "\n" + r"\begin{tabular}{ |c|c| }" + "\n" + r"\hline" + " Value&Probability" + r"\\" + "\n"
+        for key in output.keys():
+            string += r"\hline " + key + " & " + str(
+                round(100 * output[key], 5)) + r"\%" + r"\\" + "\n"
+        string += r"\hline " + "\n" + r"\end{tabular}" + "\n" + r"\end{center}"
+        return string.replace("_", r"\_")
+
+    ev_levels = ["no", "low", "moderate"]
+    #iterations = 50
+    for network in networks:
+        for i, evidence in enumerate(evidences[network]):
+            for query in queries[network]:
+                bayesian_network: BayesianNetwork = BayesianNetwork(network)
+                approximate_inference_engine: ApproximateInferenceEngine = ApproximateInferenceEngine(bayesian_network)
+                # print(query, approximate_inference_engine.gibbs_sampling(query,evidence),
+                #       approximate_inference_engine.iterations)
+                # print("--------------------------------------------------------------------------------------")
+                # print("P( ",query, " | ", evidence," )")
+                output = approximate_inference_engine.gibbs_sampling(query,evidence)
+                # for key in output.keys():
+                #     print(key, "|", str(100*output[key]) + "%")
+                #     print("Iterations: ", approximate_inference_engine.iterations)
+                if network != "win95pts.bif":
+                    print(output_to_latex_with_query(output, query, "Probability Disribution of " + query + " in network " + network +
+                                               " given " + ev_levels[i] + " evidence."))
+                else:
+                    print(output_to_latex_with_query(output, query,
+                                                     "Probability Disribution of " + query + " in network " + network +
+                                                     " given evidence set " + str(i)))
+                print("\n\n")
+                print(approximate_inference_engine.iterations)
+                print("\n")
 
     # """ 3. Hailfinder Netowrk
     # a) Report [SatContMoist, LLIW]
@@ -105,13 +138,13 @@ def main() -> None:
 
 # TODO: pointwise product method
 
-    bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
-    # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
-    print(bayesian_network)
-    print(f"Nodes: {len(bayesian_network.get_nodes())}")
-    ordering: List[Node] = bayesian_network.topological_ordering()
-    print(ordering)
-    print(len(ordering))
+    # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="child.bif")
+    # # bayesian_network: BayesianNetwork = BayesianNetwork(bif_file_name="hailfinder.bif")
+    # print(bayesian_network)
+    # print(f"Nodes: {len(bayesian_network.get_nodes())}")
+    # ordering: List[Node] = bayesian_network.topological_ordering()
+    # print(ordering)
+    # print(len(ordering))
 
 
 if __name__ == '__main__':
